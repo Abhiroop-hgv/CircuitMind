@@ -686,3 +686,9 @@ select.resolve:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .board-art .tag { font-size: 9px; fill: var(--text-2); letter-spacing: 0.02em; }
 .board-art .tag.dim { fill: var(--text-3); }
 .board-art .figure { font-size: 13px; font-weight: 600; fill: var(--danger); }
+
+.login .worked .footnote {
+  display: block; margin-top: 9px; padding-top: 8px; font-size: 11px;
+  color: var(--text-3); line-height: 1.45;
+  border-top: 1px solid var(--border-soft);
+}
