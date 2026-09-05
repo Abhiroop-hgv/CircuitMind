@@ -287,6 +287,39 @@ not guess a voltage or a temperature grade.
 | Calculating the shortage | no | it must come out identical every run |
 | Checking a part fits | no | "looks similar" is not "will physically mount" |
 | Choosing a supplier | no | prices on a signed PO must match the supplier's |
+| Answering a question | **yes** | only to pick the query; the database returns the number |
+| Approving anything | no | there is no code path from a model to an approval |
+
+### The three enforcements
+
+The table above is a design intention. These make it structural.
+
+**Constrained decoding.** The category list is injected into the request as a
+JSON-schema `enum`, so the model cannot emit a category that joins to nothing.
+Tested: with the schema the model returns MCU / China / 2026-09-20; without it,
+the same model on the same article invents a field called `origin` and a
+category called `export_control`.
+
+**A read-only database role.** The assistant connects as `scip_readonly`, created
+by `scripts/create_readonly_role.py`. Two independent locks:
+
+    privileges     SELECT granted; INSERT, UPDATE, DELETE, TRUNCATE never are
+    read-only txn  default_transaction_read_only forced on for the role
+
+The second can be switched off by the role itself, so it is not the guarantee —
+it is the belt. Verified by turning it off and retrying: every write still
+refused with `permission denied`.
+
+**An output guard** (`agents/assistant/guard.py`). Every answer is checked before
+display:
+
+    BLOCK   figures present, no tool called      -> the answer is replaced
+    FLAG    a figure in no tool result           -> annotated in the interface
+
+Different strengths on purpose. The first has no legitimate case. The second is
+usually the model doing arithmetic, and suppressing a real answer over that would
+be worse than showing a caution beside it. Digits inside part codes are ignored —
+`STM32F407VGT6` is a name, not a claim.
 
 **Model:** `openai/gpt-oss-120b` on Groq, with JSON-schema constrained decoding.
 Free tier: 1,000 requests/day, **8,000 tokens/minute** — one event costs ~1,000 tokens,
@@ -300,7 +333,26 @@ tagged `extractor='fixture'` so it can never pass as model output).
 
 ## 7. The API
 
-`api/main.py` — FastAPI over the agents. Read-only views plus two streaming pipelines.
+FastAPI over the agents. `api/main.py` is assembly only — 67 lines of CORS,
+pool lifecycle and router registration. It was 805 lines holding every endpoint,
+the SSE plumbing, the pipeline orchestration and a serialisation fix; nothing was
+wrong with any one of them, the problem was that they were together.
+
+    api/config.py          values the whole API agrees on (TODAY)
+    api/serialization.py   database rows to JSON (NUMERIC arrives as Decimal,
+                           which the JSON encoder renders as a *string* — every
+                           .toFixed() in the browser threw until this was fixed
+                           in one place)
+    api/streaming.py       server-sent events; agents are synchronous, so work
+                           runs on a thread and frames arrive through a queue
+    api/pipeline.py        the tail both pipelines share once a shortage exists
+    api/routers/           health, catalogue, recommendations, assistant, runs, bom
+
+The split was a move, not a rewrite: route bodies were lifted verbatim rather
+than retyped. A captured baseline of every endpoint's response shape proved the
+surface unchanged — and caught four regressions on the way, all missing imports
+that a clean module import cannot reveal because route bodies do not execute on
+import.
 
 ```
 GET   /api/health
@@ -347,8 +399,8 @@ with `/api/run/news` kept as a convenience wrapper that calls them in order.
 
 ## 8. The frontend
 
-`web/` — Next.js 15 (App Router, TypeScript), plain CSS with a token system, three
-Google fonts. No component library.
+`web/` — Next.js 16 (App Router, TypeScript), plain CSS with an oklch token
+system. No component library.
 
 Organised around one principle: **the answer first, the evidence underneath.**
 
@@ -360,6 +412,33 @@ Organised around one principle: **the answer first, the evidence underneath.**
 Part numbers are given plain-English names (`STM32F407VGT6` → "the controller chip in
 your motor boards"), dates render as "15 October", and every step carries an
 `AI` / `no AI` tag so the architecture argument is visible without explanation.
+
+### Screens
+
+| route | what it is for |
+|---|---|
+| `/login` | the pitch and a demo sign-in. Names the person so approvals carry a name; explicitly not an access control, and the page says so |
+| `/` | the position right now — what is at risk, what needs a decision |
+| `/events` | the feed, including the six of seven events correctly ignored |
+| `/shortages` `/suppliers` | the underlying tables |
+| `/recommendations` | each row reads as a sentence: what to do, what changes, why it exists, whether it works |
+| `/recommendations/[id]` | the verdict, then five collapsed evidence sections, then approval and the purchase orders |
+| `/bom` | upload, editable quantities, unknown-part resolution, the constraint gate |
+| `/ask` | the assistant, with every answer's queries one click away |
+
+### Two decisions worth defending
+
+**"How I got this."** Every assistant answer carries the tool calls that produced
+it, rendered as tables rather than JSON — the person deciding whether to spend
+$56,960 usually does not read JSON. The raw result stays one click away for
+someone who does.
+
+**The constraint gate.** Before a substitute search runs, an engineer can set up
+to five non-negotiables — supply rail, footprint, pin count, manufacturer,
+country of origin. Five is a deliberate cap: a gate with twelve conditions is
+not a gate, it is a search that returns nothing. They are enforced by the same
+rule engine as a board's own constraints, so a candidate that fails one is
+rejected with the reason named.
 
 ---
 
@@ -399,7 +478,64 @@ python scripts/demo.py --offline          # no network at all
 
 ---
 
-## 11. Honest limitations
+## 11. The assistant
+
+`agents/assistant/` — a question in English, answered from the same tables the
+dashboard reads.
+
+This is **not** retrieval-augmented generation, though it is often called that.
+Nothing is embedded and no text is stuffed into a prompt hoping the model reads
+it correctly. The model's only job is to choose which question to ask; the answer
+comes back as data.
+
+Ten read-only tools:
+
+    find_component            stock_position           demand_forecast
+    stock_ledger              events_affecting_inventory
+    list_suppliers            supplier_reliability
+    inventory_overview        current_shortages        pending_recommendations
+
+Each is a SELECT. Tools take a part as free text and resolve it internally, so
+the model does not chain two calls; ambiguity comes back as a list of candidates
+for the user to choose between. Nothing writes, and `approve` is deliberately
+**not** exposed: a model that can approve its own plan is exactly what the
+project's one rule forbids.
+
+---
+
+## 12. Purchase orders
+
+Produced only after a named person approves — `agents/procurement/po.py` refuses
+anything else, and the API returns `409` for a pending recommendation. There is
+no URL that yields a purchase order for an unapproved plan.
+
+**One PDF per supplier**, because that is what a purchase order is. A plan
+spanning three suppliers is three orders with three numbers and three delivery
+dates. The combined copy exists for internal review and is labelled as such: page
+two carries a second supplier's quantities and unit prices, so sending it to the
+first would show them what a competitor quoted.
+
+Numbering is derived — `PO-<recommendation>-<supplier code>` — so regenerating
+produces the same numbers rather than consuming a counter. Every page states
+that nothing has been transmitted and that issuing the order is a human act.
+
+---
+
+## 13. Tests
+
+`python -m pytest` — 55 tests, no network, no model.
+
+    tests/test_rules.py             the compatibility gate, rule by rule
+    tests/test_parser.py            every BOM bug that actually happened
+    tests/test_guard_and_intake.py  the guard, quantities, overrides, the PO gate
+
+A test whose result depends on a language model is not a regression test, it is a
+weather report — so none of them call one. Database-backed tests skip rather than
+fail when Postgres is absent.
+
+---
+
+## 14. Honest limitations
 
 - **News does not arrive by itself.** Events are seeded rows. A live feed is a
   connector — polling, deduplication, full-text fetch, a cheap relevance pre-filter
