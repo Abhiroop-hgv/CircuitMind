@@ -15,11 +15,11 @@ import { useEffect, useState } from "react";
 import { API, getJSON, postJSON, type RecoDetail, type PoManifest, HttpError } from "@/lib/api";
 import { readSession } from "@/lib/session";
 import { Shell } from "@/components/Shell";
-import { AiChip, Chip, Icon, day, money, num, plainName, severityChip } from "@/components/ui";
+import { Chip, Icon, day, money, num, plainName, severityChip } from "@/components/ui";
 
 function Section({
-  n, title, summary, ai, children,
-}: { n: number; title: string; summary: string; ai: boolean; children: React.ReactNode }) {
+  n, title, summary, children,
+}: { n: number; title: string; summary: string; children: React.ReactNode }) {
   return (
     <details className="ev">
       <summary>
@@ -29,7 +29,6 @@ function Section({
           <span className="s" style={{ marginLeft: 8 }}>{summary}</span>
         </span>
         <span className="sp">
-          <AiChip ai={ai} />
           <span className="chev"><Icon name="chev" size={13} /></span>
         </span>
       </summary>
@@ -307,7 +306,7 @@ export default function RecommendationDetail() {
       <h2 style={{ margin: "26px 0 12px", color: "var(--text-2)" }}>Evidence</h2>
 
       <Section
-        n={1} ai={false} title="Demand forecast"
+        n={1} title="Demand forecast"
         summary={data.forecast.length
           ? `${num(data.forecast.reduce((n, f) => n + f.net_demand_qty, 0))} units`
           : "not run"}
@@ -347,7 +346,7 @@ export default function RecommendationDetail() {
       </Section>
 
       <Section
-        n={2} ai={false} title="Stock ledger"
+        n={2} title="Stock ledger"
         summary={s ? `${s.ledger.length} movements` : "not run"}
       >
         {!s ? <p>No shortage record found.</p> : (
@@ -387,7 +386,7 @@ export default function RecommendationDetail() {
       </Section>
 
       <Section
-        n={3} ai={false} title="Compatibility check"
+        n={3} title="Compatibility check"
         summary={`${data.alternatives.filter((a) => a.verdict === "PASS").length} of ${data.alternatives.length} fit`}
       >
         <p>
@@ -465,7 +464,7 @@ export default function RecommendationDetail() {
       </Section>
 
       <Section
-        n={4} ai={false} title="Supplier comparison"
+        n={4} title="Supplier comparison"
         summary={`${data.suppliers_considered.length} suppliers`}
       >
         <p>
@@ -511,7 +510,7 @@ export default function RecommendationDetail() {
       </Section>
 
       <Section
-        n={5} ai={false} title="Cost breakdown"
+        n={5} title="Cost breakdown"
         summary={money(r.total_cost)}
       >
         <div className="scroll">
