@@ -1,0 +1,8 @@
+SENSOR HUB SH-100 -- Bill of Materials  Rev B
+
+U1  | STM32F407VGT6        | 1  | ARM Cortex-M4F MCU LQFP-100
+U2  | TCAN332DR            | 1  | 3.3V CAN transceiver SOIC-8
+U3  | TPS54331DDAR         | 1  | 3A buck converter
+C1  | GRM188R71H104KA93D   | 20 | 100nF 50V X7R 0603
+R1  | RC0603FR-0710KL      | 12 | 10k 1% 0603
+J1  | 43045-0400           | 2  | Micro-Fit 3.0 header

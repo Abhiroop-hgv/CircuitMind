@@ -1,0 +1,27 @@
+# Secrets. The Groq key and the database passwords live here and must never be
+# committed: a key pushed to a public repo is compromised the moment it lands,
+# and rotating it is the only fix.
+.env
+.env.local
+*.pem
+*.key
+
+# Dependencies and build output
+web/node_modules/
+web/.next/
+web/out/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Local database and editor noise
+.scip-pgdata/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# The nested repo create-next-app left behind, kept only as a local backup.
+web/.git-scaffold-backup/

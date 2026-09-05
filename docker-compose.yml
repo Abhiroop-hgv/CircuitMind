@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: scip-db
+    environment:
+      POSTGRES_USER: scip
+      POSTGRES_PASSWORD: scip
+      POSTGRES_DB: scip
+    ports:
+      # 5433 on purpose: leaves any Postgres you already run on 5432 alone.
+      - "5433:5432"
+    volumes:
+      - scip-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scip -d scip"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  scip-pgdata:

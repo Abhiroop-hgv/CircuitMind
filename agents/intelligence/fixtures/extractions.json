@@ -1,0 +1,122 @@
+{
+  "_comment": [
+    "TEST FIXTURES. Hand-written readings of the seeded demo events, used to",
+    "exercise the matching and scoring code offline without API calls.",
+    "Each one contains only what the article text supports -- the same constraint",
+    "the real extractor works under. Rows produced from these are tagged",
+    "extractor='fixture' in platform.event_impacts so a fixture run can never be",
+    "passed off as a model run."
+  ],
+
+  "EVT-2026-09-02-001": {
+    "event_type": "EXPORT_RESTRICTION",
+    "affects_physical_supply": true,
+    "countries": ["China"],
+    "cities": ["Shenzhen", "Xiamen"],
+    "component_categories": ["MCU"],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": ["8542"],
+    "effective_date": "2026-09-20",
+    "expected_delay_days": 42,
+    "mechanism": "Shipments departing on or after the effective date require an export licence, and licence processing is expected to run four to eight weeks behind.",
+    "confidence": 0.92,
+    "reasoning": "The notice imposes a licensing requirement on microcontroller exports from China with a stated effective date. It explicitly warns that booked but uncleared shipments may be held."
+  },
+
+  "EVT-2026-09-01-014": {
+    "event_type": "PORT_DISRUPTION",
+    "affects_physical_supply": true,
+    "countries": ["Taiwan"],
+    "cities": ["Kaohsiung"],
+    "component_categories": [],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": 4,
+    "mechanism": "Container handling was suspended for 36 hours, leaving a backlog that delays outbound shipments from the port.",
+    "confidence": 0.85,
+    "reasoning": "A weather event physically halted port operations. No component category is named, so this affects whatever happens to ship through Kaohsiung rather than a specific part type."
+  },
+
+  "EVT-2026-08-29-007": {
+    "event_type": "PRICE_MOVE",
+    "affects_physical_supply": false,
+    "countries": [],
+    "cities": [],
+    "component_categories": [],
+    "materials": ["copper"],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": null,
+    "mechanism": "Higher copper input costs are expected to raise prices on wiring, connectors and magnetics over the next two quarters.",
+    "confidence": 0.9,
+    "reasoning": "This is a commodity price movement, not an interruption to physical supply. Nothing in the article suggests parts will fail to arrive."
+  },
+
+  "EVT-2026-08-30-002": {
+    "event_type": "FACTORY_INCIDENT",
+    "affects_physical_supply": true,
+    "countries": ["Japan"],
+    "cities": ["Fukui"],
+    "component_categories": ["CAPACITOR_MLCC"],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": null,
+    "mechanism": "A fire has halted production at an MLCC plant, and buyers are being put on allocation for small case size parts.",
+    "confidence": 0.88,
+    "reasoning": "Production has physically stopped at a named category of plant with no restart date given. The article gives no basis for a delay figure, so none is reported."
+  },
+
+  "EVT-2026-08-27-019": {
+    "event_type": "TARIFF",
+    "affects_physical_supply": false,
+    "countries": [],
+    "cities": [],
+    "component_categories": [],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": null,
+    "mechanism": "A duty rate change would raise landed cost, but only after a 90 day consultation and not before the following fiscal year.",
+    "confidence": 0.87,
+    "reasoning": "This is a consultation, not a decision, and any effect is a cost change rather than a supply interruption. Nothing takes effect inside a planning horizon measured in weeks."
+  },
+
+  "EVT-2026-08-31-011": {
+    "event_type": "SUPPLIER_NEWS",
+    "affects_physical_supply": true,
+    "countries": [],
+    "cities": [],
+    "component_categories": ["MCU"],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": 140,
+    "mechanism": "Wafer allocation moving to higher margin lines has pushed quoted lead times on automotive qualified microcontrollers back towards 20 weeks.",
+    "confidence": 0.7,
+    "reasoning": "Lead times lengthening is a genuine supply constraint, but the article names no country and no specific supplier. It concerns automotive qualified parts specifically."
+  },
+
+  "EVT-2026-08-20-033": {
+    "event_type": "DEMAND_NEWS",
+    "affects_physical_supply": false,
+    "countries": [],
+    "cities": [],
+    "component_categories": [],
+    "materials": [],
+    "named_organisations": [],
+    "hs_codes": [],
+    "effective_date": null,
+    "expected_delay_days": null,
+    "mechanism": "None. This describes end market demand for finished consumer devices.",
+    "confidence": 0.95,
+    "reasoning": "Smartphone shipment figures say nothing about our ability to obtain components. This is market news, not a supply event."
+  }
+}

@@ -1,0 +1,12 @@
+# Stage 1: dummy ERP database + seed + verification.
+psycopg[binary]>=3.2
+python-dotenv>=1.0
+
+# Stage 2: Intelligence Agent.
+# `anthropic` is only imported when the real extractor runs -- the offline
+# fixture path needs neither the SDK nor a key.
+anthropic>=0.40
+pydantic>=2.0
+
+# Later stages add the forecasting and embedding libraries, when the agents
+# that need them are actually built.
