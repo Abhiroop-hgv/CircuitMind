@@ -27,3 +27,6 @@ Thumbs.db
 
 # The nested repo create-next-app left behind, kept only as a local backup.
 web/.git-scaffold-backup/
+
+# Claude Code editor config (local only)
+.claude/
