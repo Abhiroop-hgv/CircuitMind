@@ -219,7 +219,9 @@ Two PostgreSQL schemas keep the product boundary visible in the code itself:
 | API | FastAPI, server-sent events for live runs |
 | dashboard | Next.js 16 (App Router, TypeScript), plain CSS |
 
-`ARCHITECTURE.md` has the detail — every agent, every table, every decision.
+`docs/architecture.svg` is the same picture as a single diagram, sized for a
+slide. `ARCHITECTURE.md` has the detail — every agent, every table, every
+decision.
 
 ---
 
