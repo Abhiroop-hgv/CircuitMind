@@ -21,3 +21,9 @@ anthropic>=0.40
 openpyxl>=3.1.0
 pypdf>=4.0.0
 pdfplumber>=0.11.0
+
+# Tests
+pytest>=8.0
+
+# Sample BOM generation (scripts/make_sample_bom*.py)
+fpdf2>=2.7

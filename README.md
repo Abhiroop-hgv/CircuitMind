@@ -1,4 +1,4 @@
-# Overlay — supply-chain intelligence
+# CircuitMind — supply-chain intelligence
 
 > Your ERP records what you hold. It does not read the news, and it cannot tell
 > you that an export licence published this morning leaves one microcontroller
@@ -136,6 +136,14 @@ To see the whole chain in the terminal without the UI:
 
 ```bash
 python scripts/demo.py
+```
+
+Rehearsing consumes what is being demonstrated: once a recommendation is
+approved the dashboard opens on a green chip with nothing left to sign. To put
+it back without rebuilding the chain:
+
+```bash
+python scripts/reset_approval.py
 ```
 
 <details>
@@ -278,13 +286,22 @@ We would rather state these than be caught by them.
 
 ## Attribution
 
-The BOM parser is vendored from **CircuitMind** by Shruthi-Joshi
-(`services/backend/app/docai/parser.py`) — same team, same hackathon — with
-attribution in the file and three bug fixes. The hash-embedding similarity
-fallback comes from the same project.
+**CircuitMind** is this team's product. The name comes from
+[Shruthi-Joshi/CircuitMind](https://github.com/Shruthi-Joshi/CircuitMind), a
+repository by the same team member, and the two share more than a name — parts
+of this project came from there and parts are going back.
 
-`integration/circuitmind/` is a patch going the other way: a drop-in replacement
-for CircuitMind's `compatibility_score()`, which accepts package, pin-count and
-voltage arguments and discards them. Our rule engine plugs into that seam so a
-candidate that cannot physically go on the board is rejected rather than ranked.
-Tested, documented, and ready to hand over.
+**Taken from it:** the BOM parser (`services/backend/app/docai/parser.py`),
+vendored with attribution in the file and three bug fixes, and the
+hash-embedding similarity fallback.
+
+**Going back to it:** `integration/circuitmind/` is a drop-in replacement for
+that project's `compatibility_score()`, which accepts package, pin-count and
+voltage arguments and discards them — so a candidate can rank highly on a
+description while being physically unmountable. Our rule engine plugs into that
+seam and rejects it instead, with the reason named. Tested, documented, ready to
+hand over.
+
+The two halves are complementary rather than competing: their vector retrieval
+finds candidates at catalogue scale, our deterministic rules decide whether one
+actually fits the board.

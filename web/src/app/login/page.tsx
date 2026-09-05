@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { readSession, writeSession, ROLES, type Person } from "@/lib/session";
+import { BoardArt } from "@/components/BoardArt";
 import { Icon } from "@/components/ui";
 
 const CAPABILITIES = [
@@ -92,7 +93,7 @@ export default function LoginPage() {
         <div className="brand">
           <span style={{ color: "var(--accent)" }}><Icon name="layer" size={30} /></span>
           <span>
-            <b>Overlay</b>
+            <b>CircuitMind</b>
             <span>supply-chain intelligence</span>
           </span>
         </div>
@@ -100,12 +101,19 @@ export default function LoginPage() {
         <h1>External events, resolved to your own part numbers.</h1>
 
         <p className="lede">
-          Your ERP records what you hold. It does not read trade notices, and it cannot
-          tell you that an export licence published this morning leaves one
-          microcontroller 5,130 units short by 15&nbsp;October. Overlay closes that gap:
-          it reads events that have already occurred, resolves them against your bill of
-          materials, supplier lanes and open purchase orders, and produces a costed
-          procurement plan for a person to approve.
+          Your ERP records what you hold. It does not read trade notices, port closures
+          or fab incidents, and it cannot tell you which of your part numbers they
+          touch, by how much, or by when. CircuitMind closes that gap: it reads events
+          that have already occurred, resolves them against your bill of materials,
+          supplier lanes and open purchase orders, and produces a costed procurement
+          plan for a person to approve.
+        </p>
+
+        <p className="lede">
+          It reads from the systems you already run and writes nothing back to them.
+          Every quantity, price and date it shows is a database answer rather than a
+          model&rsquo;s recollection, and every plan stops at a person before anything
+          is ordered.
         </p>
 
         <ol className="chain">
@@ -121,7 +129,7 @@ export default function LoginPage() {
         </ol>
 
         <div className="worked">
-          <span className="label">Worked example, from the current dataset</span>
+          <span className="label">How it reads in practice</span>
           <ol>
             <li>Export licence notice on microcontroller shipments originating in China</li>
             <li><b>STM32F407VGT6</b> matched by supplier lane, 4,000 units in transit exposed</li>
@@ -130,18 +138,26 @@ export default function LoginPage() {
             <li><b>$56,960.50</b> across three suppliers, all landing 23 days early</li>
             <li>Held for approval, no order placed</li>
           </ol>
+          <span className="footnote">
+            One worked example. Those figures are what the system produced, end to
+            end, from a single published notice.
+          </span>
         </div>
 
         <p className="boundary">
-          <b>Overlay is not an ERP.</b> It performs no order entry, invoicing, warehouse
-          or accounting function, and reads from the systems you already operate. Every
-          quantity, price, lead time and date is returned by a database query. The
-          language model interprets text and selects which query to run; it is never the
-          source of a number.
+          <b>CircuitMind is not an ERP, and does not replace one.</b> It performs no
+          order entry, invoicing, warehouse or accounting function. It sits on top of
+          the system of record and gives back the one thing that system cannot produce:
+          what the outside world just did to you, in your own part numbers.
+          Compatibility is decided by a deterministic rule engine rather than a
+          similarity score &mdash; two parts can read almost identically and differ by a
+          package that will not sit on the footprint.
         </p>
       </section>
 
       <section className="gate">
+        <BoardArt />
+
         <div className="card">
           <h2>Sign in</h2>
           <p className="note">Recorded against every approval you make.</p>

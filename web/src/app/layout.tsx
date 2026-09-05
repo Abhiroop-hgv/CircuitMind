@@ -18,7 +18,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Overlay — supply-chain intelligence",
+  title: "CircuitMind — supply-chain intelligence",
   description:
     "Connects what is changing outside the company with what is sitting inside the ERP, and recommends what to do about it.",
 };
