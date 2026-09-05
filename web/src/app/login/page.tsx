@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { readSession, writeSession, ROLES, type Person } from "@/lib/session";
+import { BoardArt } from "@/components/BoardArt";
 import { Icon } from "@/components/ui";
 
 const CAPABILITIES = [
@@ -92,7 +93,7 @@ export default function LoginPage() {
         <div className="brand">
           <span style={{ color: "var(--accent)" }}><Icon name="layer" size={30} /></span>
           <span>
-            <b>Overlay</b>
+            <b>CircuitMind</b>
             <span>supply-chain intelligence</span>
           </span>
         </div>
@@ -102,7 +103,7 @@ export default function LoginPage() {
         <p className="lede">
           Your ERP records what you hold. It does not read trade notices, and it cannot
           tell you that an export licence published this morning leaves one
-          microcontroller 5,130 units short by 15&nbsp;October. Overlay closes that gap:
+          microcontroller 5,130 units short by 15&nbsp;October. CircuitMind closes that gap:
           it reads events that have already occurred, resolves them against your bill of
           materials, supplier lanes and open purchase orders, and produces a costed
           procurement plan for a person to approve.
@@ -133,7 +134,7 @@ export default function LoginPage() {
         </div>
 
         <p className="boundary">
-          <b>Overlay is not an ERP.</b> It performs no order entry, invoicing, warehouse
+          <b>CircuitMind is not an ERP.</b> It performs no order entry, invoicing, warehouse
           or accounting function, and reads from the systems you already operate. Every
           quantity, price, lead time and date is returned by a database query. The
           language model interprets text and selects which query to run; it is never the
@@ -142,6 +143,8 @@ export default function LoginPage() {
       </section>
 
       <section className="gate">
+        <BoardArt />
+
         <div className="card">
           <h2>Sign in</h2>
           <p className="note">Recorded against every approval you make.</p>

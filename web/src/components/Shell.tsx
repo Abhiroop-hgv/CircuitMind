@@ -61,7 +61,7 @@ export function Shell({
         <div className="mark">
           <span style={{ color: "var(--accent)" }}><Icon name="layer" size={26} /></span>
           <span className="word">
-            <b>Overlay</b>
+            <b>CircuitMind</b>
             <span>supply-chain intelligence</span>
           </span>
         </div>

@@ -671,3 +671,18 @@ select.resolve:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 .empty p { margin: 8px 0 0; max-width: 62ch; line-height: 1.55; }
 .empty .btn { margin-top: 4px; }
+
+/* the sign-in illustration */
+.login .gate { align-content: center; gap: 22px; }
+.board-art { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; }
+.board-art .ref {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 11px; font-weight: 600;
+  fill: var(--text-1);
+}
+.board-art .mpn {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 9.5px;
+  fill: var(--text-2);
+}
+.board-art .tag { font-size: 9px; fill: var(--text-2); letter-spacing: 0.02em; }
+.board-art .tag.dim { fill: var(--text-3); }
+.board-art .figure { font-size: 13px; font-weight: 600; fill: var(--danger); }
