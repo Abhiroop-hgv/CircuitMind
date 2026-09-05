@@ -22,7 +22,11 @@ changes behaviour by accident.
 from __future__ import annotations
 
 import sys
+import threading
+import time
 from pathlib import Path
+
+import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -41,7 +45,8 @@ app = FastAPI(title="Supply-Chain Intelligence Layer", version="1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173",
-                   "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+                   "http://127.0.0.1:3000", "http://127.0.0.1:5173",
+                   "https://circuit-mind.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,9 +62,22 @@ app.include_router(runs.router)
 app.include_router(bom.router)
 
 
+def _keep_alive() -> None:
+    """Self-ping on Render every 30s so the free instance does not go cold."""
+    time.sleep(15)
+    url = "https://team-satyatma.onrender.com/api/health"
+    while True:
+        try:
+            requests.get(url, timeout=10)
+        except Exception:
+            pass
+        time.sleep(30)
+
+
 @app.on_event("startup")
 def _open_pool() -> None:
     get_pool()
+    threading.Thread(target=_keep_alive, daemon=True).start()
 
 
 @app.on_event("shutdown")
