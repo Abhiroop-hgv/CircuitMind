@@ -219,7 +219,7 @@ Two PostgreSQL schemas keep the product boundary visible in the code itself:
 | API | FastAPI, server-sent events for live runs |
 | dashboard | Next.js 16 (App Router, TypeScript), plain CSS |
 
-`docs/architecture.svg` is the same picture as a single diagram, sized for a
+`artifacts/architecture.svg` is the same picture as a single diagram, sized for a
 slide. `ARCHITECTURE.md` has the detail — every agent, every table, every
 decision.
 
@@ -261,28 +261,6 @@ document through the parser rather than a convenient one — a do-not-populate l
 being purchased, a reference designator winning over the real part number, an
 item-number column read as a quantity, a title block parsed as a component. They
 exist so the next change cannot quietly reintroduce them.
-
----
-
-## Honest limitations
-
-We would rather state these than be caught by them.
-
-- **No live news ingestion.** Events are seeded fixtures. The extraction path is
-  real and runs against a live model; the feed is not.
-- **The similarity ranker is word overlap, not semantics.** It ranks a catalogue
-  by shared vocabulary. A part described in genuinely different words ranks
-  poorly. Vector retrieval is the fix and is mapped out, not built.
-- **Images are refused.** OCR would make a model the source of a quantity with
-  nothing to check it against — the one place our own rule could not hold. We
-  chose the refusal.
-- **Raw materials are not modelled.** The lowest level is a part number. A
-  gallium or copper event reaches a real buyer indirectly; we cannot trace that
-  path yet.
-- **`TODAY` is pinned** to 2026-09-03, because the seeded data describes a
-  specific week.
-- **Sign-in is a demo sign-in.** It names the person so approvals carry a name.
-  It is not an access control and the page says so.
 
 ---
 
