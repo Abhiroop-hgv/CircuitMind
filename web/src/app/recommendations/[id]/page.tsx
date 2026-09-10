@@ -309,10 +309,20 @@ export default function RecommendationDetail() {
         n={1} title="Demand forecast"
         summary={data.forecast.length
           ? `${num(data.forecast.reduce((n, f) => n + f.net_demand_qty, 0))} units`
-          : "not run"}
+          : data.shortage?.build_request_id ? "not applicable" : "not run"}
       >
         {data.forecast.length === 0 ? (
-          <p>No forecast has been run for this component.</p>
+          data.shortage?.build_request_id ? (
+            <p>
+              Not applicable. This plan is driven by a build request for{" "}
+              {data.shortage.build_name ?? data.shortage.build_sku ?? "a board"}
+              {data.shortage.build_qty ? ` (${num(data.shortage.build_qty)} units)` : ""}, a
+              new-product board with no order history to forecast against. The
+              requirement is the stated build quantity, not forecast consumption.
+            </p>
+          ) : (
+            <p>No forecast has been run for this component.</p>
+          )
         ) : (
           <>
             <p>

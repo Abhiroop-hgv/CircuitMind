@@ -332,6 +332,9 @@ export interface RecoDetail {
     shortage_qty: number; baseline_shortage_qty: number;
     first_shortfall_date: string; severity: string; ledger: LedgerRow[];
     horizon_start: string; horizon_end: string;
+    /** Set when the shortage comes from a build request rather than an event. */
+    build_request_id: number | null; build_sku: string | null;
+    build_name: string | null; build_qty: number | null;
   } | null;
   alternatives: {
     mpn: string; manufacturer: string; standard_cost: number;

@@ -171,12 +171,17 @@ def recommendation_detail(reco_id: int) -> Dict:
         lines = rows(cur)
 
         cur.execute(
-            """SELECT demand_qty, usable_stock, expected_supply, shortage_qty,
-                      baseline_shortage_qty, first_shortfall_date, severity,
-                      ledger, horizon_start, horizon_end
-                 FROM platform.shortages
-                WHERE component_id = %s
-                ORDER BY created_at DESC LIMIT 1""",
+            """SELECT sh.demand_qty, sh.usable_stock, sh.expected_supply,
+                      sh.shortage_qty, sh.baseline_shortage_qty,
+                      sh.first_shortfall_date, sh.severity, sh.ledger,
+                      sh.horizon_start, sh.horizon_end,
+                      sh.build_request_id, p.sku AS build_sku,
+                      p.name AS build_name, br.build_qty
+                 FROM platform.shortages sh
+                 LEFT JOIN platform.build_requests br ON br.id = sh.build_request_id
+                 LEFT JOIN erp.products p ON p.id = br.product_id
+                WHERE sh.component_id = %s
+                ORDER BY sh.created_at DESC LIMIT 1""",
             (component_id,),
         )
         shortage = (rows(cur) or [None])[0]
