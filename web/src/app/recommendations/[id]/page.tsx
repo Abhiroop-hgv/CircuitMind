@@ -140,7 +140,16 @@ export default function RecommendationDetail() {
   const r = data.recommendation;
   const s = data.shortage;
   const approved = r.status === "APPROVED";
-  const boards = ["MC-3000", "SD-220"];
+  // The boards this part sits on, read from the rule-check results rather than
+  // assumed. Falls back to the BOM board, then to the original demo pair.
+  const boards = (() => {
+    const seen = [...new Set(
+      data.alternatives.flatMap((a) => a.checks.map((c) => c.board)),
+    )].filter(Boolean);
+    if (seen.length) return seen;
+    if (data.shortage?.build_sku) return [data.shortage.build_sku];
+    return ["MC-3000", "SD-220"];
+  })();
   const chosen = data.alternatives.find((a) => a.mpn === data.lines[0]?.mpn);
   const cheapest = r.considered.find((c) => c.viable && c.plan !== r.strategy);
 
@@ -154,11 +163,14 @@ export default function RecommendationDetail() {
         </div>
         <h1>{plainName(r.category, boards)}</h1>
         <div className="note">
-          <span className="mono">{r.original_mpn}</span>
           {s && (
-            <> &mdash; short <span className="mono">{num(s.shortage_qty)}</span> units
-            from <span className="mono">{day(s.first_shortfall_date)}</span></>
+            <>Short <span className="mono">{num(s.shortage_qty)}</span> units
+            from <span className="mono">{day(s.first_shortfall_date)}</span>
+            {" — "}</>
           )}
+          {r.requires_bom_change
+            ? "a verified alternative part is ready to drop in"
+            : "covered in full by the original part, no design change"}
         </div>
       </header>
 
