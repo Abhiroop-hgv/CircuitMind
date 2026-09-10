@@ -280,10 +280,12 @@ export interface EventRow {
 }
 
 export interface ShortageRow {
-  id: number; mpn: string; demand_qty: number; usable_stock: number;
+  id: number; mpn: string; category: string; demand_qty: number; usable_stock: number;
   expected_supply: number; shortage_qty: number; baseline_shortage_qty: number;
   first_shortfall_date: string | null; severity: string; ledger: LedgerRow[];
   event_id: number | null; build_request_id: number | null;
+  /** The active boards that carry this part. Empty if none are registered. */
+  skus: string[];
 }
 
 export interface SupplierRow {

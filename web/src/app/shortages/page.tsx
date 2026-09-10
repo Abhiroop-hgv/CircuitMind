@@ -42,7 +42,7 @@ export default function ShortagesPage() {
                 {active.map((s) => (
                   <tr key={s.id}>
                     <td>
-                      <div>{plainName("MCU", ["MC-3000", "SD-220"])}</div>
+                      <div>{plainName(s.category, s.skus)}</div>
                       <div className="note mono">{s.mpn}</div>
                     </td>
                     <td>{severityChip(s.severity)}</td>

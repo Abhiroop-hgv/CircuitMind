@@ -42,13 +42,25 @@ def impacts() -> List[Dict]:
 @router.get("/api/shortages")
 def shortages() -> List[Dict]:
     with pooled() as conn, conn.cursor() as cur:
-        cur.execute("""SELECT s.id, c.mpn, s.demand_qty, s.usable_stock, s.expected_supply,
-                              s.shortage_qty, s.baseline_shortage_qty,
+        cur.execute("""SELECT s.id, c.mpn, c.category, s.demand_qty, s.usable_stock,
+                              s.expected_supply, s.shortage_qty, s.baseline_shortage_qty,
                               s.first_shortfall_date, s.severity, s.ledger,
-                              s.event_id, s.build_request_id
+                              s.event_id, s.build_request_id,
+                              -- the boards that actually carry this part, so each row
+                              -- names its own product rather than a hardcoded pair
+                              COALESCE((SELECT array_agg(p.sku ORDER BY p.sku)
+                                          FROM erp.bom b
+                                          JOIN erp.products p ON p.id = b.product_id
+                                         WHERE b.component_id = s.component_id
+                                           AND p.active), '{}') AS skus
                          FROM platform.shortages s
                          JOIN erp.components c ON c.id = s.component_id
-                        ORDER BY s.shortage_qty DESC""")
+                        -- a live event outranks a hypothetical build; then severity,
+                        -- then whichever bites first, then size
+                        ORDER BY (s.event_id IS NOT NULL) DESC,
+                                 (s.severity = 'CRITICAL') DESC,
+                                 s.first_shortfall_date ASC NULLS LAST,
+                                 s.shortage_qty DESC""")
         return rows(cur)
 
 

@@ -54,7 +54,9 @@ export default function OverviewPage() {
   const weekEvents = events.filter(
     (e) => Date.now() - new Date(e.published_at).getTime() < 7 * 86_400_000,
   );
-  const blocking = active.filter((s) => s.severity === "CRITICAL").length;
+  // "blocks a committed order" only applies to a shortage against the real order
+  // book — a build-request shortage is a hypothetical the planner asked for.
+  const blocking = active.filter((s) => s.severity === "CRITICAL" && s.event_id).length;
   const shaky = suppliers.filter((s) => s.score != null && s.score < 0.7).length;
 
   return (
@@ -80,13 +82,13 @@ export default function OverviewPage() {
           <span className="ico"><Icon name="alert" /></span>
           <div className="txt">
             <h1>
-              You run out of {plainName("MCU", ["MC-3000", "SD-220"])} on{" "}
+              You run out of {plainName(worst.category, worst.skus)} on{" "}
               {day(worst.first_shortfall_date)}
             </h1>
             <p>
               <span className="mono">{worst.mpn}</span> &mdash; short{" "}
               <span className="mono">{num(worst.shortage_qty)}</span> units.
-              {cause ? <> Caused by: {cause.headline}</> : null}
+              {cause && worst.event_id ? <> Caused by: {cause.headline}</> : null}
             </p>
           </div>
           {forWorst && (
@@ -148,7 +150,7 @@ export default function OverviewPage() {
             <div className="item" key={s.id}>
               <div style={{ paddingTop: 2 }}>{severityChip(s.severity)}</div>
               <div className="main">
-                <div className="t">{plainName("MCU", ["MC-3000", "SD-220"])}</div>
+                <div className="t">{plainName(s.category, s.skus)}</div>
                 <div className="s mono">{s.mpn}</div>
               </div>
               <div className="end">
