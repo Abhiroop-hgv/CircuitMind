@@ -4,12 +4,13 @@ Second demo scenario, from a BOM instead of a news event.
 
 Reuses the real Sensor Hub SH-100 board already registered in the ERP (see
 scripts/bom_scenario.py) and runs the same buildability, component and
-procurement agents used there -- at a build quantity chosen so that no
-single distributor holds enough MX25L12835FM2I-10G flash to cover the run,
-the same shape as the STM32 story. Nothing here is invented: every figure
-below is the live agents' output against the seeded catalogue. The only
-thing this script chooses is the build quantity -- a scenario parameter,
-the same way the original demo script hardcodes BUILD_QTY = 500.
+procurement agents used there -- at a build quantity chosen so that the
+unaffected suppliers cannot cover the MX25L12835FM2I-10G flash in full and
+procurement swaps to the verified alternative W25Q128JVSIQ. Nothing here is
+invented: every figure below is the live agents' output against the seeded
+catalogue. The only thing this script chooses is the build quantity -- a
+scenario parameter, the same way the original demo script hardcodes
+BUILD_QTY = 500.
 
     python scripts/make_bom_split_po.py [--approve "Name"] [--build-qty N]
 """
@@ -37,7 +38,7 @@ NEED_BY = date(2026, 11, 15)
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build-qty", type=int, default=7000)
+    ap.add_argument("--build-qty", type=int, default=8500)
     ap.add_argument("--approve")
     args = ap.parse_args()
 
@@ -62,6 +63,18 @@ def main() -> int:
     build = BuildabilityAgent(conn)
     assessment = build.assess(request_id)
     build.persist(assessment)
+
+    # Buildability raises a shortage for every blocked line on the board. This
+    # scenario only demonstrates the flash, so drop the rest -- otherwise the
+    # dashboard headline becomes an unrelated inductor and "active shortages"
+    # jumps into the twenties.
+    with conn.cursor() as cur:
+        cur.execute(
+            """DELETE FROM platform.shortages
+                WHERE build_request_id = %s
+                  AND component_id <> (SELECT id FROM erp.components WHERE mpn = %s)""",
+            (request_id, FEATURED_MPN))
+    conn.commit()
 
     featured = next((l for l in assessment.lines if l.mpn == FEATURED_MPN), None)
     if featured is None or featured.shortage.shortage_qty <= 0:
