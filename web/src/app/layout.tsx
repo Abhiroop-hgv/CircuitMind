@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   title: "CircuitMind — supply-chain intelligence",
   description:
     "Connects what is changing outside the company with what is sitting inside the ERP, and recommends what to do about it.",
+  icons: { icon: "/circuitmind-logo.png" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

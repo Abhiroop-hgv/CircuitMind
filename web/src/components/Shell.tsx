@@ -59,11 +59,11 @@ export function Shell({
     <div className="app">
       <aside className="sidebar">
         <div className="mark">
-          <span style={{ color: "var(--accent)" }}><Icon name="layer" size={26} /></span>
-          <span className="word">
-            <b>CircuitMind</b>
-            <span>supply-chain intelligence</span>
-          </span>
+          <img
+            src="/circuitmind-logo.png"
+            alt="CircuitMind — AI supply-chain intelligence"
+            className="mark-logo"
+          />
         </div>
 
         <nav className="nav">

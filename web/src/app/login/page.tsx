@@ -91,11 +91,11 @@ export default function LoginPage() {
     <div className="login">
       <section className="pitch">
         <div className="brand">
-          <span style={{ color: "var(--accent)" }}><Icon name="layer" size={30} /></span>
-          <span>
-            <b>CircuitMind</b>
-            <span>supply-chain intelligence</span>
-          </span>
+          <img
+            src="/circuitmind-logo.png"
+            alt="CircuitMind — AI supply-chain intelligence"
+            className="brand-logo"
+          />
         </div>
 
         <h1>External events, resolved to your own part numbers.</h1>

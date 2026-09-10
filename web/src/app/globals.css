@@ -73,10 +73,12 @@ a { color: inherit; text-decoration: none; }
   background: var(--surface); border-right: 1px solid var(--border);
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
 }
-.mark { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; }
+.mark { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
 .mark .word { display: grid; line-height: 1.2; }
 .mark .word b { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
 .mark .word span { font-size: 11px; color: var(--text-3); }
+/* The logo art ships on a white plate; multiply drops it onto the panel colour. */
+.mark-logo { width: 168px; max-width: 100%; height: auto; display: block; mix-blend-mode: multiply; }
 
 .nav { padding: 4px 10px; display: grid; gap: 1px; }
 .nav a {
@@ -412,9 +414,10 @@ details.ev .inner p { color: var(--text-2); max-width: 76ch; }
   display: flex; flex-direction: column; gap: 20px;
 }
 .login .brand { display: flex; align-items: center; gap: 11px; }
-.login .brand > span:last-child { display: flex; flex-direction: column; line-height: 1.25; }
-.login .brand b { font-size: 16px; letter-spacing: -0.01em; }
-.login .brand span span { font-size: 11.5px; color: var(--text-3); }
+.login .brand-logo {
+  width: 280px; max-width: 62%; height: auto; display: block;
+  mix-blend-mode: multiply;
+}
 
 .login h1 {
   margin: 0; font-size: 30px; line-height: 1.22; letter-spacing: -0.022em;
