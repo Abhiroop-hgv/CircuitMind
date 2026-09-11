@@ -433,7 +433,30 @@ def build_overview(pdf: Doc) -> None:
     pdf.set_text_color(*MUTED)
     pdf.cell(0, 8, f"Compatible host module: {HOST_BOARD}", align="C",
              new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(20)
+    pdf.ln(14)
+
+    # Host-board photography is STMicroelectronics' own product photo, not
+    # ours to reproduce here -- especially not on a page that disclaims any
+    # ST affiliation. A captioned placeholder, the way an internal doc
+    # references a third party's imagery without copying it.
+    box_w, box_h = 130, 46
+    box_x = (pdf.w - box_w) / 2
+    box_y = pdf.get_y()
+    pdf.set_draw_color(*RULE)
+    pdf.set_line_width(0.3)
+    pdf.rect(box_x, box_y, box_w, box_h)
+    pdf.set_xy(box_x, box_y + box_h / 2 - 7)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(box_w, 5, f"Host module photo: {HOST_BOARD}", align="C",
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_x(box_x)
+    pdf.set_font("Helvetica", "", 7.5)
+    pdf.cell(box_w, 5, "refer to the product page at www.st.com", align="C",
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_y(box_y + box_h)
+    pdf.ln(14)
+
     pdf.set_draw_color(*RULE)
     pdf.set_line_width(0.3)
     y = pdf.get_y()
