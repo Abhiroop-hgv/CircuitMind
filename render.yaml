@@ -23,15 +23,18 @@ services:
     runtime: python
     plan: free
     region: oregon
-    buildCommand: pip install -r requirements.txt
-    # Runs after the build, before each deploy goes live. Rebuilds the schema
-    # and the deterministic seed from scratch every time -- intentional: this
-    # is a demo dataset, and every deploy should open on the same known-good
-    # STM32 recommendation, not whatever state the last visitor left behind.
-    # The read-only-role step is wrapped so a failure there (rare -- depends
-    # on the DB user's privileges) degrades the assistant rather than aborting
-    # the seed; db/connection.py already falls back and says so in the logs.
-    preDeployCommand: >-
+    # preDeployCommand would be the natural place for this, but it's a paid-
+    # plan feature -- Render refuses the whole Blueprint on the free tier if
+    # it's present. Folded into the build instead, so it still runs on every
+    # deploy. Rebuilds the schema and the deterministic seed from scratch each
+    # time -- intentional: this is a demo dataset, and every deploy should
+    # open on the same known-good STM32 recommendation, not whatever state the
+    # last visitor left behind. The read-only-role step is wrapped so a
+    # failure there (rare -- depends on the DB user's privileges) degrades the
+    # assistant rather than failing the whole build; db/connection.py already
+    # falls back and says so in the logs.
+    buildCommand: >-
+      pip install -r requirements.txt &&
       python scripts/init_db.py &&
       (python scripts/create_readonly_role.py || true) &&
       python scripts/demo.py --offline

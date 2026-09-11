@@ -20,9 +20,11 @@ whole thing, and it's short.
    in the blueprint, meaning "don't store this in the repo, ask the human".
    Paste your key from [console.groq.com](https://console.groq.com) (free tier).
 5. **Apply**. Render provisions the database, then builds and deploys both
-   services. First deploy takes a few minutes — the API's `preDeployCommand`
-   builds the schema and seeds the demo data as part of it, so by the time it
-   goes live there's already a recommendation waiting.
+   services. First deploy takes a few minutes — `circuitmind-api`'s build step
+   builds the schema and seeds the demo data as part of it (not a
+   `preDeployCommand` — that's a paid-plan feature Render's free tier
+   rejects), so by the time it goes live there's already a recommendation
+   waiting.
 
 ## 2. Open it
 
@@ -61,16 +63,17 @@ un-suffixed one:
 
 ## 5. Re-seeding
 
-Every deploy re-runs `init_db.py` (rebuild schema + deterministic seed) and
-`demo.py --offline` (produce the STM32 recommendation) before going live, so
-pushing to `main` — or clicking **Manual Deploy** — puts the demo back to its
-known-good state. That also means an approval a judge makes during a live demo
-won't survive the *next* deploy; that's expected, not a bug (see README's note
-on `scripts/reset_approval.py` for the same idea locally).
+Every deploy rebuilds `circuitmind-api`, and its build command re-runs
+`init_db.py` (rebuild schema + deterministic seed) and `demo.py --offline`
+(produce the STM32 recommendation) as its last two steps, so pushing to `main`
+— or clicking **Manual Deploy** — puts the demo back to its known-good state.
+That also means an approval a judge makes during a live demo won't survive the
+*next* deploy; that's expected, not a bug (see README's note on
+`scripts/reset_approval.py` for the same idea locally).
 
 The second demo scenario (SH-100 flash substitution) isn't in the automated
 seed — it's `scripts/run_bom_intake.py` then `scripts/make_bom_split_po.py`,
 run once against a live deploy the same way you'd run them locally, pointed at
 `DATABASE_URL` from the Render dashboard's Postgres **Connect** tab. Add them
-to `preDeployCommand` in `render.yaml` if you want it seeded automatically on
-every deploy too.
+to `circuitmind-api`'s `buildCommand` in `render.yaml` if you want them seeded
+automatically on every deploy too.
