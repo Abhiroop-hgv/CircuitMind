@@ -36,9 +36,9 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import psycopg                                      # noqa: E402
 from psycopg import sql                             # noqa: E402
 
-from db.connection import database_url              # noqa: E402
+from db.connection import READONLY_ROLE, database_url  # noqa: E402
 
-ROLE = "scip_readonly"
+ROLE = READONLY_ROLE
 SCHEMAS = ("erp", "platform", "public")
 ENV_KEY = "DATABASE_URL_RO"
 

@@ -21,6 +21,7 @@ changes behaviour by accident.
 
 from __future__ import annotations
 
+import os
 import sys
 import threading
 import time
@@ -41,12 +42,15 @@ from db.connection import close_pool, get_pool                 # noqa: E402
 app = FastAPI(title="Supply-Chain Intelligence Layer", version="1.0")
 
 # The dev front end runs on its own port. In production both are served from one
-# origin and this list goes away.
+# origin and this list goes away. CORS_ORIGINS (comma-separated) adds whatever
+# the deployed web app's actual origin is -- set per environment, never hardcoded
+# to one deployment's URL.
+_extra_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173",
                    "http://127.0.0.1:3000", "http://127.0.0.1:5173",
-                   "https://circuit-mind.onrender.com"],
+                   *_extra_origins],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,9 +67,18 @@ app.include_router(bom.router)
 
 
 def _keep_alive() -> None:
-    """Self-ping on Render every 30s so the free instance does not go cold."""
+    """
+    Self-ping every 30s so a free Render instance sees recent traffic.
+
+    RENDER_EXTERNAL_URL is set automatically by Render on every service --
+    never hardcoded here, so this does the right thing (or nothing) on any
+    deployment, including a laptop, where the env var is simply absent.
+    """
+    base = os.getenv("RENDER_EXTERNAL_URL")
+    if not base:
+        return
     time.sleep(15)
-    url = "https://team-satyatma.onrender.com/api/health"
+    url = f"{base.rstrip('/')}/api/health"
     while True:
         try:
             requests.get(url, timeout=10)

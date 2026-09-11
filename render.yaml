@@ -1,0 +1,79 @@
+# Render Blueprint for CircuitMind.
+#
+# Deploy: on render.com, New -> Blueprint -> pick this repo. Render reads this
+# file and proposes the database + both services below. You'll be prompted for
+# the one secret it can't generate itself: GROQ_API_KEY (console.groq.com,
+# free tier). Everything else -- the DB connection, the read-only role's
+# password, the two services' URLs -- is wired automatically.
+#
+# See RENDER.md for the full walkthrough, what "free plan" means here, and
+# what to do if a service name collides with one already taken on your account.
+
+databases:
+  - name: circuitmind-db
+    databaseName: scip
+    user: scip
+    plan: free
+    region: oregon
+
+services:
+  # ---- the API --------------------------------------------------------
+  - type: web
+    name: circuitmind-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    # Runs after the build, before each deploy goes live. Rebuilds the schema
+    # and the deterministic seed from scratch every time -- intentional: this
+    # is a demo dataset, and every deploy should open on the same known-good
+    # STM32 recommendation, not whatever state the last visitor left behind.
+    # The read-only-role step is wrapped so a failure there (rare -- depends
+    # on the DB user's privileges) degrades the assistant rather than aborting
+    # the seed; db/connection.py already falls back and says so in the logs.
+    preDeployCommand: >-
+      python scripts/init_db.py &&
+      (python scripts/create_readonly_role.py || true) &&
+      python scripts/demo.py --offline
+    startCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DATABASE_URL
+        fromDatabase:
+          name: circuitmind-db
+          property: connectionString
+      # Fixed for the life of the service; create_readonly_role.py sets the
+      # DB role's password to match, and db/connection.py composes
+      # DATABASE_URL_RO from this + DATABASE_URL at import time -- no .env
+      # file involved, because this container never has one.
+      - key: READONLY_PASSWORD
+        generateValue: true
+      # Set manually after the first deploy: dashboard -> circuitmind-api ->
+      # Environment. Never put a real key in this file.
+      - key: GROQ_API_KEY
+        sync: false
+      # The web service's origin, so its browser requests aren't blocked by
+      # CORS. Update this (and redeploy circuitmind-api) if the web service
+      # ends up at a different name -- see RENDER.md.
+      - key: CORS_ORIGINS
+        value: https://circuitmind-web.onrender.com
+
+  # ---- the dashboard ---------------------------------------------------
+  - type: web
+    name: circuitmind-web
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.11.0
+      # Baked into the client bundle at build time (Next.js NEXT_PUBLIC_*
+      # semantics) -- if circuitmind-api ends up at a different name, update
+      # this and trigger a new build, not just a restart. See RENDER.md.
+      - key: NEXT_PUBLIC_API
+        value: https://circuitmind-api.onrender.com

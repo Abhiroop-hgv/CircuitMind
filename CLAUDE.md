@@ -102,6 +102,10 @@ app being slow.
   regression pins, not coverage.
 - `integration/circuitmind/` — a drop-in replacement for the sister project's
   `compatibility_score()`; do not couple it to this repo's internals.
+- `render.yaml` + `RENDER.md` — Render Blueprint (Postgres + API + web) and the
+  deploy walkthrough. `CORS_ORIGINS` (API) and `NEXT_PUBLIC_API` (web) carry the
+  two services' URLs into each other — never hardcode a deployment's URL in
+  source, as `api/main.py` once did.
 
 ## Language model
 

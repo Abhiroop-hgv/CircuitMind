@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from typing import Iterator, Optional
+from urllib.parse import urlsplit
 
 import psycopg
 from dotenv import load_dotenv
@@ -34,6 +35,8 @@ load_dotenv()
 DEFAULT_URL = "postgresql://scip:scip@localhost:5432/scip"
 
 SEARCH_PATH = "SET search_path TO erp, platform, public"
+
+READONLY_ROLE = "scip_readonly"
 
 _pool = None  # type: Optional[object]
 
@@ -58,7 +61,30 @@ def connect() -> psycopg.Connection:
 
 
 def readonly_url() -> Optional[str]:
-    return os.getenv("DATABASE_URL_RO")
+    """
+    DATABASE_URL_RO if it is set directly. Otherwise, composed from
+    DATABASE_URL + READONLY_PASSWORD if both are present.
+
+    scripts/create_readonly_role.py normally writes DATABASE_URL_RO into a
+    local .env file, which is exactly what a laptop wants and exactly what a
+    container that never has a writable, persistent .env (Render, most PaaS)
+    cannot use. Everything but the password is already public in DATABASE_URL,
+    so a fixed READONLY_PASSWORD env var -- the same value the create-role
+    script was run with -- is enough to reconstruct it at import time instead.
+    """
+    explicit = os.getenv("DATABASE_URL_RO")
+    if explicit:
+        return explicit
+
+    password = os.getenv("READONLY_PASSWORD")
+    if not password:
+        return None
+
+    parts = urlsplit(database_url())
+    host = parts.hostname or "127.0.0.1"
+    port = parts.port or 5432
+    name = (parts.path or "/scip").lstrip("/")
+    return f"postgresql://{READONLY_ROLE}:{password}@{host}:{port}/{name}"
 
 
 def connect_readonly() -> psycopg.Connection:
