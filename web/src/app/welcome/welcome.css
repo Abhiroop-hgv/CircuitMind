@@ -1,0 +1,294 @@
+/* ============================================================================
+   CircuitMind — landing experience. Scroll-driven, six cinematic scenes.
+   Scoped under .cm-landing so nothing leaks into the light enterprise app.
+   ========================================================================== */
+
+.cm-landing {
+  --l-bg:      #090d14;
+  --l-bg-2:    #0c1220;
+  --l-panel:   #101826;
+  --l-line:    #1e2a3b;
+  --l-line-2:  #2c3c52;
+  --l-text:    #f2f6fa;
+  --l-text-2:  #93a1b1;
+  --l-text-3:  #5f6f80;
+  --l-blue:    #4a9eff;
+  --l-blue-2:  #6db4ff;
+  --l-cyan:    #38d6e6;
+  --l-red:     #ff5468;
+  --l-amber:   #f7b955;
+  --l-green:   #37d29a;
+
+  position: relative;
+  background: var(--l-bg);
+  color: var(--l-text);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+.cm-landing *, .cm-landing *::before, .cm-landing *::after { box-sizing: border-box; }
+
+/* ---- navigation ----------------------------------------------------------- */
+.cm-nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 54px;
+  border-bottom: 1px solid transparent;
+  transition: background .3s, backdrop-filter .3s, border-color .3s, padding .3s;
+}
+.cm-nav[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--l-bg) 80%, transparent);
+  backdrop-filter: blur(16px);
+  border-bottom-color: var(--l-line);
+  padding-top: 16px; padding-bottom: 16px;
+}
+.cm-brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
+.cm-brand svg { width: 22px; height: 22px; }
+.cm-nav-links { display: flex; gap: 34px; font-size: 14px; font-weight: 500; }
+.cm-nav-links button { background: none; border: 0; font: inherit; color: var(--l-text-2); cursor: pointer; }
+.cm-nav-links button:hover { color: var(--l-text); }
+.cm-nav-actions { display: flex; align-items: center; gap: 24px; font-size: 14px; font-weight: 500; }
+.cm-nav-actions .cm-login { color: var(--l-text-2); }
+.cm-nav-actions .cm-login:hover { color: var(--l-text); }
+
+.cm-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 8px; padding: 11px 20px;
+  font-size: 14px; font-weight: 600; border: 1px solid transparent;
+  cursor: pointer; white-space: nowrap;
+  transition: transform .15s, box-shadow .2s, background .2s, border-color .2s;
+}
+.cm-btn--primary {
+  background: linear-gradient(180deg, var(--l-blue-2), var(--l-blue));
+  color: #051222;
+  box-shadow: 0 8px 26px -8px color-mix(in srgb, var(--l-blue) 75%, transparent);
+}
+.cm-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--l-blue) 85%, transparent); }
+.cm-btn--ghost { background: transparent; color: var(--l-text); border-color: var(--l-line-2); }
+.cm-btn--ghost:hover { border-color: var(--l-text-3); background: color-mix(in srgb, #fff 4%, transparent); }
+.cm-btn--lg { padding: 15px 28px; font-size: 15px; border-radius: 10px; }
+
+/* ---- the scroll story --------------------------------------------------- */
+.cm-story { position: relative; height: 760vh; }   /* ~1.25 screens per scene */
+.cm-stage {
+  position: sticky; top: 0; height: 100vh; overflow: hidden;
+  background: radial-gradient(ellipse 70% 60% at 72% 42%, color-mix(in srgb, var(--l-blue) 12%, transparent), transparent 70%), var(--l-bg);
+}
+
+/* progress rail */
+.cm-rail { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; gap: 12px; }
+.cm-rail i { width: 6px; height: 6px; border-radius: 50%; background: var(--l-text-3); opacity: .45; transition: all .35s; }
+.cm-rail i[data-on="true"] { background: var(--l-blue); opacity: 1; transform: scale(1.5); box-shadow: 0 0 12px color-mix(in srgb, var(--l-blue) 70%, transparent); }
+
+/* scroll hint */
+.cm-scrollhint { position: absolute; left: 54px; bottom: 40px; display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .22em; color: var(--l-text-3); z-index: 30; }
+.cm-scrollhint .cm-bar { width: 1px; height: 40px; background: linear-gradient(var(--l-text-3), transparent); position: relative; }
+.cm-scrollhint .cm-bar::after { content: ""; position: absolute; left: -1px; top: 0; width: 3px; height: 12px; background: var(--l-cyan); border-radius: 3px; animation: cm-hint 1.9s ease-in-out infinite; }
+@keyframes cm-hint { 0% { transform: translateY(-4px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(34px); opacity: 0; } }
+
+/* ---- a scene ----------------------------------------------------------- */
+.cm-scene {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  padding: 0 54px;
+  opacity: 0;
+  will-change: opacity;
+}
+.cm-scene[data-i="0"] { opacity: 1; }
+
+.cm-scene-copy { position: relative; z-index: 20; max-width: 42%; }
+.cm-kicker { margin: 0 0 20px; font-size: 12px; font-weight: 600; letter-spacing: .24em; color: var(--l-text-3); text-transform: uppercase; }
+.cm-scene h1 {
+  margin: 0 0 22px; font-weight: 600; letter-spacing: -.022em;
+  font-size: clamp(40px, 4.4vw, 60px); line-height: 1.06;
+}
+.cm-scene h1 .accent { color: var(--l-blue-2); }
+.cm-scene-copy > p { margin: 0; font-size: 17px; line-height: 1.65; color: var(--l-text-2); max-width: 34ch; }
+.cm-cta-row { display: flex; gap: 14px; margin-top: 30px; }
+
+/* ---- shared art canvas (right / behind) --------------------------------- */
+.cm-artwrap {
+  position: absolute; inset: 0; z-index: 5;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* the chip + pcb used in scenes 1-4 */
+.cm-chip {
+  position: absolute; width: 430px; height: 430px;
+  right: 5%; top: 50%; margin-top: -215px;
+  filter: drop-shadow(0 50px 90px rgba(0,0,0,.6));
+  will-change: transform;
+}
+.cm-pcb {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: .62;
+}
+.cm-pcb .cm-pcb-bokeh circle { filter: blur(22px); }
+.cm-pcb .cm-pcb-trace { opacity: 0.9; }
+.cm-pcb .cm-pcb-live path { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; filter: drop-shadow(0 0 7px var(--l-cyan)); }
+.cm-pcb.is-alive { opacity: 1; }
+.cm-pcb.is-alive .cm-pcb-trace { opacity: 1; stroke: #2a5074; }
+.cm-pcb.is-alive .cm-pcb-bokeh circle { opacity: 0.28; }
+
+/* falling chips (scene 2) */
+.cm-fall { position: absolute; inset: 0; }
+.cm-fall .cm-drop { position: absolute; will-change: transform, opacity; filter: drop-shadow(0 24px 34px rgba(0,0,0,.55)); }
+
+/* light beams (scene 2) */
+.cm-beams { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-end; gap: 26px; z-index: 3; }
+.cm-beams i {
+  width: 4px; height: 70vh; align-self: flex-end; border-radius: 4px;
+  background: linear-gradient(to top, color-mix(in srgb, var(--l-cyan) 90%, transparent), color-mix(in srgb, var(--l-blue) 30%, transparent) 45%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--l-cyan) 45%, transparent);
+  transform-origin: bottom;
+}
+
+/* glow board (scene 4) */
+.cm-board-glow {
+  position: absolute; right: 4%; top: 50%; width: 640px; height: 640px; margin-top: -320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--l-blue) 24%, transparent), transparent 62%);
+  filter: blur(30px);
+}
+
+/* disruption (scene 4) — real world map as a CSS mask over a navy fill */
+.cm-worldwrap {
+  position: absolute; right: -6%; top: 50%; transform: translateY(-50%);
+  height: 78vh; aspect-ratio: 1010 / 666; width: auto;
+  z-index: 4;
+}
+.cm-worldmap {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 55% at 60% 38%, color-mix(in srgb, var(--l-blue) 30%, transparent), transparent 68%),
+    #33465e;
+  -webkit-mask: url(/world-map.svg) center / contain no-repeat;
+          mask: url(/world-map.svg) center / contain no-repeat;
+  opacity: 1;
+}
+.cm-worldmap.echo {
+  filter: blur(2px);
+  background: color-mix(in srgb, var(--l-red) 40%, transparent);
+  opacity: 0.35;
+}
+.cm-arcs { position: absolute; inset: 0; overflow: visible; }
+.cm-marker {
+  position: absolute; width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px;
+  z-index: 6;
+}
+.cm-marker::before, .cm-marker::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+}
+.cm-marker::before { background: var(--l-red); box-shadow: 0 0 14px 2px var(--l-red); }
+.cm-marker::after { border: 1.5px solid var(--l-red); animation: cm-ping 2.4s ease-out infinite; }
+@keyframes cm-ping { 0% { transform: scale(1); opacity: .9; } 80%, 100% { transform: scale(3.6); opacity: 0; } }
+
+.cm-events { position: absolute; right: 5%; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 16px; z-index: 22; }
+.cm-event {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: color-mix(in srgb, var(--l-panel) 92%, #000);
+  border: 1px solid var(--l-line); border-left: 3px solid var(--l-red);
+  border-radius: 10px; padding: 13px 16px; max-width: 290px;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.6);
+}
+.cm-event .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--l-red); margin-top: 5px; box-shadow: 0 0 10px var(--l-red); flex: none; }
+.cm-event b { display: block; font-size: 11px; letter-spacing: .14em; color: var(--l-red); margin-bottom: 3px; }
+.cm-event span { font-size: 13px; color: var(--l-text-2); line-height: 1.45; }
+
+/* insight card (scene 6) */
+.cm-scene--respond { justify-content: space-between; }
+.cm-checklist { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.cm-checklist li { display: flex; gap: 12px; align-items: center; font-size: 14.5px; color: var(--l-text-2); }
+.cm-checklist svg { width: 20px; height: 20px; flex: none; color: var(--l-blue); }
+.cm-insight {
+  position: relative; z-index: 20; width: 420px;
+  background: color-mix(in srgb, var(--l-panel) 94%, #000);
+  border: 1px solid var(--l-line); border-radius: 14px; padding: 22px 24px;
+  box-shadow: 0 40px 90px -20px rgba(0,0,0,.7);
+}
+.cm-insight .tag { font-size: 12px; letter-spacing: .1em; color: var(--l-text-3); }
+.cm-insight .flag { display: flex; align-items: center; gap: 8px; margin: 8px 0 18px; font-weight: 600; color: var(--l-red); font-size: 15px; }
+.cm-insight .flag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--l-red); box-shadow: 0 0 10px var(--l-red); }
+.cm-insight dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; font-size: 13.5px; }
+.cm-insight dt { color: var(--l-text-3); }
+.cm-insight dd { margin: 0; text-align: right; color: var(--l-text); font-variant-numeric: tabular-nums; }
+.cm-insight dd.big { color: var(--l-blue-2); font-weight: 600; }
+.cm-insight .go { margin-top: 20px; width: 100%; justify-content: center; }
+
+/* ---- final scene · sign in ------------------------------------------- */
+.cm-scene--signin { padding: 0; align-items: stretch; }
+.cm-signin {
+  position: relative; z-index: 20; display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  width: 100%; height: 100%;
+}
+.cm-signin-pitch {
+  padding: clamp(48px, 7vw, 110px) clamp(40px, 6vw, 96px);
+  display: flex; flex-direction: column; justify-content: center; gap: 22px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--l-blue) 10%, transparent), transparent 55%), var(--l-bg-2);
+  border-right: 1px solid var(--l-line);
+}
+.cm-signin-pitch .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
+.cm-signin-pitch .brand svg { width: 24px; height: 24px; }
+.cm-signin-pitch h2 { margin: 6px 0 0; font-size: clamp(32px, 3.6vw, 46px); line-height: 1.1; letter-spacing: -.02em; font-weight: 600; }
+.cm-signin-pitch .lede { margin: 0; color: var(--l-text-2); font-size: 16px; line-height: 1.6; max-width: 42ch; }
+.cm-signin-pitch ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+.cm-signin-pitch li { display: flex; gap: 11px; align-items: center; font-size: 14px; color: var(--l-text-2); }
+.cm-signin-pitch li svg { width: 18px; height: 18px; color: var(--l-blue); flex: none; }
+.cm-signin-pitch .tagline { margin-top: 18px; font-size: 13px; letter-spacing: .12em; color: var(--l-text-3); font-style: italic; }
+
+/* right half is LIGHT — it is the first frame of the app, easing the
+   dark-landing -> light-dashboard handoff instead of flashing straight to it */
+.cm-signin-form {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(40px, 6vw, 90px);
+  background: #f7f9fb;
+  color: #1c2530;
+}
+.cm-signin-card {
+  width: 100%; max-width: 380px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cm-signin-card h3 { margin: 0 0 2px; font-size: 22px; font-weight: 600; color: #12181f; }
+.cm-signin-card .sub { margin: 0 0 22px; font-size: 13.5px; color: #6b7885; }
+.cm-signin-card label { font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #6b7885; text-transform: uppercase; margin-top: 14px; }
+.cm-signin-card input, .cm-signin-card select {
+  margin-top: 7px; width: 100%;
+  background: #fff; border: 1px solid #d3dae1; border-radius: 9px;
+  padding: 12px 14px; font: inherit; font-size: 15px; color: #1c2530;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.cm-signin-card input:focus, .cm-signin-card select:focus {
+  border-color: var(--l-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--l-blue) 20%, transparent);
+}
+.cm-signin-card select { appearance: none; cursor: pointer; }
+.cm-signin-card .enter { margin-top: 24px; width: 100%; justify-content: center; }
+.cm-signin-card .demo { margin: 18px 0 0; font-size: 12px; line-height: 1.55; color: #8a95a1; }
+.cm-signin-card .demo b { color: #5a6470; }
+
+/* ---- reduced motion: flatten to stacked readable scenes ----------------- */
+@media (prefers-reduced-motion: reduce) {
+  .cm-story { height: auto; }
+  .cm-stage { position: relative; height: auto; overflow: visible; }
+  .cm-scene { position: relative; inset: auto; opacity: 1; min-height: 90vh; page-break-inside: avoid; }
+  .cm-scene--signin { min-height: 100vh; }
+  .cm-scrollhint, .cm-beams { display: none; }
+  .cm-marker::after { animation: none; }
+  .cm-pcb .cm-pcb-live path { opacity: .8; stroke-dashoffset: 0; }
+}
+
+/* ---- responsive ------------------------------------------------------------ */
+@media (max-width: 1080px) {
+  .cm-nav { padding: 16px 22px; }
+  .cm-nav-links { display: none; }
+  .cm-scene { padding: 0 24px; }
+  .cm-scene-copy { max-width: 100%; }
+  .cm-chip { width: 300px; height: 300px; right: -6%; opacity: .5; margin-top: -150px; }
+  .cm-worldwrap { width: 120%; right: -30%; opacity: .5; }
+  .cm-events { position: relative; right: auto; transform: none; margin-top: 30px; }
+  .cm-insight { display: none; }
+  .cm-rail { display: none; }
+  .cm-signin { grid-template-columns: 1fr; }
+  .cm-signin-pitch { display: none; }
+}

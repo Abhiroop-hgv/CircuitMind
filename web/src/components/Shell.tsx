@@ -42,7 +42,7 @@ export function Shell({
   useEffect(() => {
     const person = readSession();
     setWho(person);
-    if (!person) router.replace("/login");
+    if (!person) router.replace("/welcome");
   }, [router]);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export function Shell({
           <button
             className="signout"
             title="Sign out"
-            onClick={() => { clearSession(); router.replace("/login"); }}
+            onClick={() => { clearSession(); router.replace("/welcome"); }}
           >
             Sign out
           </button>
