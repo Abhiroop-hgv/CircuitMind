@@ -316,9 +316,18 @@ export default function RecommendationDetail() {
 
       {/* --------------------------------------------------- the evidence -- */}
       <h2 style={{ margin: "26px 0 12px", color: "var(--text-2)" }}>Evidence</h2>
+      <p className="note" style={{ maxWidth: "78ch", margin: "-6px 0 14px" }}>
+        Steps 1&ndash;2 are about the part that is short, <b className="mono">{r.original_mpn}</b>.
+        {r.requires_bom_change
+          ? " Step 3 verifies a substitute for it; steps 4–5 price and source " +
+            "whichever part is actually being bought — the original, or the " +
+            "verified substitute."
+          : " The original part itself covers this in full, so no substitute " +
+            "appears below."}
+      </p>
 
       <Section
-        n={1} title="Demand forecast"
+        n={1} title={`Demand forecast — ${r.original_mpn}`}
         summary={data.forecast.length
           ? `${num(data.forecast.reduce((n, f) => n + f.net_demand_qty, 0))} units`
           : data.shortage?.build_request_id ? "not applicable" : "not run"}
@@ -368,7 +377,7 @@ export default function RecommendationDetail() {
       </Section>
 
       <Section
-        n={2} title="Stock ledger"
+        n={2} title={`Stock ledger — ${r.original_mpn}`}
         summary={s ? `${s.ledger.length} movements` : "not run"}
       >
         {!s ? <p>No shortage record found.</p> : (
