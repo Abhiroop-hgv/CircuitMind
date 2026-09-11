@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from typing import Iterator, Optional
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import psycopg
 from dotenv import load_dotenv
@@ -84,7 +84,11 @@ def readonly_url() -> Optional[str]:
     host = parts.hostname or "127.0.0.1"
     port = parts.port or 5432
     name = (parts.path or "/scip").lstrip("/")
-    return f"postgresql://{READONLY_ROLE}:{password}@{host}:{port}/{name}"
+    # A generated password (Render's generateValue, secrets.token_urlsafe, ...)
+    # can contain '@', ':', '/' etc. -- unescaped, one of those splits the URL
+    # in the wrong place and psycopg tries to resolve the role name as a host.
+    safe_password = quote(password, safe="")
+    return f"postgresql://{READONLY_ROLE}:{safe_password}@{host}:{port}/{name}"
 
 
 def connect_readonly() -> psycopg.Connection:

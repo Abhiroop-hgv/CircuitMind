@@ -28,7 +28,7 @@ import re
 import secrets
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -49,7 +49,10 @@ def readonly_url(password: str) -> str:
     host = parts.hostname or "127.0.0.1"
     port = parts.port or 5432
     name = (parts.path or "/scip").lstrip("/")
-    return f"postgresql://{ROLE}:{password}@{host}:{port}/{name}"
+    # Unescaped, a generated password containing '@', ':' or '/' splits the URL
+    # in the wrong place -- see db/connection.py's readonly_url() for the same fix.
+    safe_password = quote(password, safe="")
+    return f"postgresql://{ROLE}:{safe_password}@{host}:{port}/{name}"
 
 
 def write_env(url: str) -> Path:
