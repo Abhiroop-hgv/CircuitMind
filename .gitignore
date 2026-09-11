@@ -30,3 +30,8 @@ web/.git-scaffold-backup/
 
 # Claude Code editor config (local only)
 .claude/
+
+# Local-only output of scripts/make_nucleo_shield_bom.py's NUCLEO_COVER_IMAGE
+# option: embeds STMicroelectronics' own product photo, so it never belongs
+# in this (public) repo's history. See that script's main() docstring.
+samples/*-with-photo.pdf

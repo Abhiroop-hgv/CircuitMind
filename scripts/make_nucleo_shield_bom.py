@@ -35,8 +35,10 @@ unknown rather than guess, and a DNP line must count as zero rather than one.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -419,7 +421,7 @@ class Doc(FPDF):
         self.ln(2)
 
 
-def build_overview(pdf: Doc) -> None:
+def build_overview(pdf: Doc, cover_image: "Optional[Path]" = None) -> None:
     pdf.bom_mode = False
 
     # Cover
@@ -435,27 +437,39 @@ def build_overview(pdf: Doc) -> None:
              new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(14)
 
-    # Host-board photography is STMicroelectronics' own product photo, not
-    # ours to reproduce here -- especially not on a page that disclaims any
-    # ST affiliation. A captioned placeholder, the way an internal doc
-    # references a third party's imagery without copying it.
-    box_w, box_h = 130, 46
-    box_x = (pdf.w - box_w) / 2
-    box_y = pdf.get_y()
-    pdf.set_draw_color(*RULE)
-    pdf.set_line_width(0.3)
-    pdf.rect(box_x, box_y, box_w, box_h)
-    pdf.set_xy(box_x, box_y + box_h / 2 - 7)
-    pdf.set_font("Helvetica", "I", 9)
-    pdf.set_text_color(*MUTED)
-    pdf.cell(box_w, 5, f"Host module photo: {HOST_BOARD}", align="C",
-             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_x(box_x)
-    pdf.set_font("Helvetica", "", 7.5)
-    pdf.cell(box_w, 5, "refer to the product page at www.st.com", align="C",
-             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_y(box_y + box_h)
-    pdf.ln(14)
+    if cover_image and Path(cover_image).exists():
+        # Opt-in only (NUCLEO_COVER_IMAGE env var, not part of the default
+        # build -- see main()): STMicroelectronics' own product photo,
+        # embedded because it was explicitly asked for after the tradeoff
+        # was flagged. Never committed to the repo -- see main()'s docstring
+        # note on the output path.
+        img_w = 150
+        img_x = (pdf.w - img_w) / 2
+        pdf.image(str(cover_image), x=img_x, y=pdf.get_y(), w=img_w)
+        pdf.set_y(pdf.get_y() + img_w * 0.84)  # matches the crop's aspect ratio
+        pdf.ln(6)
+    else:
+        # Host-board photography is STMicroelectronics' own product photo,
+        # not ours to reproduce here -- especially not on a page that
+        # disclaims any ST affiliation. A captioned placeholder, the way an
+        # internal doc references a third party's imagery without copying it.
+        box_w, box_h = 130, 46
+        box_x = (pdf.w - box_w) / 2
+        box_y = pdf.get_y()
+        pdf.set_draw_color(*RULE)
+        pdf.set_line_width(0.3)
+        pdf.rect(box_x, box_y, box_w, box_h)
+        pdf.set_xy(box_x, box_y + box_h / 2 - 7)
+        pdf.set_font("Helvetica", "I", 9)
+        pdf.set_text_color(*MUTED)
+        pdf.cell(box_w, 5, f"Host module photo: {HOST_BOARD}", align="C",
+                 new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_x(box_x)
+        pdf.set_font("Helvetica", "", 7.5)
+        pdf.cell(box_w, 5, "refer to the product page at www.st.com", align="C",
+                 new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_y(box_y + box_h)
+        pdf.ln(14)
 
     pdf.set_draw_color(*RULE)
     pdf.set_line_width(0.3)
@@ -631,15 +645,25 @@ def build_bom(pdf: Doc, cat) -> int:
 
 
 def main() -> int:
+    """
+    NUCLEO_COVER_IMAGE, if set, points at a local image file to embed on the
+    cover in place of the placeholder box -- opt-in, not the default, because
+    the realistic value there is STMicroelectronics' own product photo (see
+    build_overview). Deliberately NOT committed to this repo, and the output
+    filename changes so a real-photo run can never overwrite the tracked
+    samples/BOM-KE-G474-SHIELD-A.pdf -- keep any such output local only.
+    """
     cat = catalogue()
+    cover_image = os.getenv("NUCLEO_COVER_IMAGE")
 
     pdf = Doc(orientation="P", unit="mm", format="A4")
     pdf.set_auto_page_break(auto=True, margin=18)
 
-    build_overview(pdf)
+    build_overview(pdf, cover_image=Path(cover_image) if cover_image else None)
     fitted = build_bom(pdf, cat)
 
-    out = Path(__file__).resolve().parents[1] / "samples" / f"{DOCNO}.pdf"
+    suffix = "-with-photo" if cover_image else ""
+    out = Path(__file__).resolve().parents[1] / "samples" / f"{DOCNO}{suffix}.pdf"
     out.parent.mkdir(exist_ok=True)
     pdf.output(str(out))
 
