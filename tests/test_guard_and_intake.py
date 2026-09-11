@@ -104,6 +104,38 @@ class TestNormalise:
         assert normalise("stm32f407vgt6") == normalise("STM32F407VGT6")
 
 
+class TestOCRProvenance:
+    """
+    An OCR-derived line is flagged in resolve.py's note on every outcome, not
+    only when it fails to match -- see resolve.py's module docstring for why
+    a clean match is not evidence the reading was correct.
+    """
+
+    def test_a_matched_ocr_line_is_still_flagged(self, conn):
+        from agents.bom_intake.resolve import resolve_lines
+        with conn.cursor() as cur:
+            cur.execute("SELECT mpn FROM erp.components LIMIT 1")
+            mpn = cur.fetchone()[0]
+
+        clean = resolve_lines(conn, [{"line_number": 1, "mpn": mpn, "quantity": 1}])
+        assert clean[0].note == ""
+
+        ocr = resolve_lines(
+            conn, [{"line_number": 1, "mpn": mpn, "quantity": 1, "source": "ocr"}])
+        assert ocr[0].resolution == clean[0].resolution == "EXACT"
+        assert "OCR" in ocr[0].note
+
+    def test_an_unmatched_ocr_line_keeps_both_reasons(self, conn):
+        from agents.bom_intake.resolve import resolve_lines
+        rows = resolve_lines(conn, [
+            {"line_number": 1, "mpn": "NOT-A-REAL-PART-9999",
+             "quantity": 1, "source": "ocr"},
+        ])
+        assert rows[0].resolution == "UNKNOWN"
+        assert "not in the component catalogue" in rows[0].note
+        assert "OCR" in rows[0].note
+
+
 class TestPurchaseOrderGate:
     """A purchase order that needs no person is not a gate, it is a formality."""
 

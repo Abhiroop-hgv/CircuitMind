@@ -5,6 +5,14 @@ The parser hands back `"STM32F407VGT6"`. The rest of the system needs
 `component_id = 1`. That gap is where a BOM intake quietly goes wrong, so the
 matching is deliberately narrow and every outcome is recorded.
 
+A line the parser read via OCR (agents/bom_intake/ocr.py) carries
+row["source"] == "ocr", and every such line is tagged in `note` here --
+EXACT match included, not only the ones that fail to resolve. OCR reads a
+character wrong with unhelpfully high confidence (a "6" scored 0.997 reading
+as a "9" in testing), so a correct-looking match is not reliably a correct
+one; that is a person's call once they can see the source document next to
+it, not something a resolution outcome can certify away.
+
 Three outcomes, and no fourth:
 
     EXACT       the string matches erp.components.mpn as written
@@ -132,6 +140,10 @@ def resolve_lines(conn, rows: List[dict]) -> List[Resolved]:
         else:
             item.resolution = UNKNOWN
             item.note = "not in the component catalogue"
+
+        if row.get("source") == "ocr":
+            item.note = (f"{item.note} -- " if item.note else "") + \
+                "read via OCR, verify against the source document"
 
         out.append(item)
 

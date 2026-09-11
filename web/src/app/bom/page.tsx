@@ -10,13 +10,18 @@
 
 import { useRef, useState } from "react";
 
-import { API, streamFrames, type BomPreview, type Frame, getJSON, postJSON, type PoManifest } from "@/lib/api";
+import { API, streamFrames, type BomPreview, getJSON, postJSON, type PoManifest } from "@/lib/api";
 import { ConstraintGate, describe } from "@/components/ConstraintGate";
 import { readSession } from "@/lib/session";
 import { Shell } from "@/components/Shell";
 import { Chip, Icon, day, money, num } from "@/components/ui";
 
-const ACCEPTED = ["CSV", "TSV", "XLSX", "PDF", "TXT"];
+// resolve.py tags every OCR-derived line this way, matched or not -- see its
+// module docstring. Surfaced here rather than left in a field the UI never
+// reads, since the entire point of the tag is that a person sees it.
+const isOcr = (note: string) => note.toLowerCase().includes("ocr");
+
+const ACCEPTED = ["CSV", "TSV", "XLSX", "PDF", "TXT", "JPG", "PNG"];
 
 export default function BomPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -25,7 +30,6 @@ export default function BomPage() {
   const [parseMs, setParseMs] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [log, setLog] = useState<Frame[]>([]);
   const [registered, setRegistered] = useState<string | null>(null);
 
   // What the run produced, and the orders that follow once a person approves.
@@ -48,7 +52,7 @@ export default function BomPage() {
   const [needBy, setNeedBy] = useState("2026-11-15");
 
   async function choose(f: File | null) {
-    setFile(f); setPreview(null); setError(null); setRegistered(null); setLog([]);
+    setFile(f); setPreview(null); setError(null); setRegistered(null);
     setEdits({});
     setRecoId(null); setManifest(null);
     if (!f) return;
@@ -92,7 +96,7 @@ export default function BomPage() {
 
   async function register() {
     if (!file) return;
-    setBusy(true); setError(null); setLog([]);
+    setBusy(true); setError(null);
     try {
       const form = new FormData();
       form.append("file", file);
@@ -104,7 +108,6 @@ export default function BomPage() {
       form.append("constraints", JSON.stringify(constraints));
       form.append("overrides", JSON.stringify(edits));
       for await (const f of streamFrames("/api/run/bom", form)) {
-        setLog((l) => [...l, f]);
         if (f.event === "error") setError(String(f.data.message));
         if (f.event === "stage" && f.data.stage === "parse" && f.data.status === "done") {
           setRegistered(String(f.data.product_id ?? ""));
@@ -170,14 +173,17 @@ export default function BomPage() {
           onKeyDown={(e) => { if (e.key === "Enter") input.current?.click(); }}
         >
           <div className="big">{file ? file.name : "Drag a file here, or browse"}</div>
-          <div className="sm">A bill of materials for a board you want to build.</div>
+          <div className="sm">
+            A bill of materials for a board you want to build &mdash;
+            or a scan or photo of one, read via OCR.
+          </div>
           <div className="types">
             {ACCEPTED.map((t) => <Chip key={t} tone="neutral">{t}</Chip>)}
           </div>
         </div>
         <input
           ref={input} type="file" style={{ display: "none" }}
-          accept=".csv,.tsv,.xlsx,.xls,.pdf,.txt"
+          accept=".csv,.tsv,.xlsx,.xls,.pdf,.txt,.jpg,.jpeg,.png,.bmp,.tiff,.tif"
           onChange={(e) => void choose(e.target.files?.[0] ?? null)}
         />
 
@@ -236,6 +242,11 @@ export default function BomPage() {
                               {l.mpn_raw}
                               {picked && (
                                 <span className="swapped"> &rarr; {picked}</span>
+                              )}
+                              {isOcr(l.note) && (
+                                <span title={l.note}>
+                                  {" "}<Chip tone="ai">OCR &mdash; verify</Chip>
+                                </span>
                               )}
                             </td>
                             <td>
@@ -453,20 +464,6 @@ export default function BomPage() {
               </div>
             </section>
           </>
-        )}
-
-        {log.length > 0 && (
-          <section className="card">
-            <header><h2>Event stream</h2><span className="note mono">{log.length} frames</span></header>
-            <div className="log" style={{ height: 220 }}>
-              {log.map((f, i) => (
-                <div className="ln" key={i}>
-                  <div className="ev-name">event: {f.event}</div>
-                  <div className="ev-data">data: {JSON.stringify(f.data).slice(0, 300)}</div>
-                </div>
-              ))}
-            </div>
-          </section>
         )}
 
         {busy && !preview && (

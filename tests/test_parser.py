@@ -119,20 +119,92 @@ class TestControlledDocument:
 
 
 class TestRefusals:
-    def test_an_image_is_refused_with_a_reason(self, tmp_path):
+    def test_an_unreadable_image_raises_a_clear_error(self, tmp_path):
+        """
+        Not a real refusal any more -- see TestOCR -- but a file that is not
+        actually a decodable image (truncated upload, wrong extension) must
+        still fail with one sentence a person can act on, not RapidOCR's bare
+        "cannot identify image file" or a raw traceback reaching the UI as a
+        500.
+        """
         image = tmp_path / "bom.png"
         image.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\0" * 64)
         with pytest.raises(RuntimeError, match="image"):
             parse_bom_file(image)
 
-    def test_a_pdf_with_no_text_layer_is_refused_rather_than_returning_nothing(
-            self, tmp_path):
-        """Zero rows and no error reads as "broken", not "this file is a scan"."""
+    def test_a_blank_scanned_pdf_returns_nothing_rather_than_erroring(self, tmp_path):
+        """
+        No text layer routes to OCR (TestOCR), and a page with nothing on it
+        to read is a legitimately different outcome from a crash: zero lines,
+        not an exception -- the UI already treats zero parsed lines as its
+        own state, distinct from "something went wrong".
+        """
         pytest.importorskip("fpdf")
         from fpdf import FPDF
         pdf = FPDF()
         pdf.add_page()
         out = tmp_path / "scan.pdf"
         pdf.output(str(out))
-        with pytest.raises(RuntimeError, match="no text layer"):
-            parse_bom_file(out)
+        assert parse_bom_file(out) == []
+
+
+class TestOCR:
+    """
+    A scan or a photograph, read via agents.bom_intake.ocr (RapidOCR) instead
+    of being refused -- see parser.py's module docstring for why, and
+    ocr.py's for the accuracy trade this makes.
+    """
+
+    @pytest.fixture(scope="class")
+    def bom_image(self, tmp_path_factory):
+        """
+        A synthetic BOM table, rendered as pixels rather than PDF text -- the
+        same shape of document a phone photo or a flatbed scan would produce.
+        Column gaps wide enough for RapidOCR's text detector to split cells,
+        as a real printed table's usually are (see ocr.py's _find_header_row
+        docstring for the case where they are not).
+        """
+        pytest.importorskip("PIL")
+        from PIL import Image, ImageDraw, ImageFont
+
+        img = Image.new("RGB", (1000, 260), "white")
+        d = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.truetype("arial.ttf", 24)
+            font_b = ImageFont.truetype("arialbd.ttf", 24)
+        except OSError:
+            font = font_b = ImageFont.load_default()
+
+        cols_x = [30, 180, 520, 650]
+        rows = [
+            ["Ref", "MPN", "Qty", "Description"],
+            ["U1", "STM32F407VGT6", "1", "MCU, LQFP-100"],
+            ["C1", "GRM188R71H104KA93D", "20", "100nF MLCC 0603"],
+        ]
+        y = 30
+        for i, row in enumerate(rows):
+            f = font_b if i == 0 else font
+            for x, text in zip(cols_x, row):
+                d.text((x, y), text, fill="black", font=f)
+            y += 70
+
+        path = tmp_path_factory.mktemp("ocr") / "bom_scan.png"
+        img.save(path)
+        return path
+
+    def test_mpns_are_read_correctly(self, bom_image):
+        pytest.importorskip("rapidocr_onnxruntime")
+        rows = parse_bom_file(bom_image)
+        mpns = {r["mpn"] for r in rows}
+        assert "STM32F407VGT6" in mpns
+        assert "GRM188R71H104KA93D" in mpns
+
+    def test_every_row_is_tagged_as_ocr_derived(self, bom_image):
+        """
+        resolve.py flags an OCR line on every outcome, matched or not, because
+        a confident wrong reading looks identical to a confident right one.
+        That flag starts here.
+        """
+        pytest.importorskip("rapidocr_onnxruntime")
+        rows = parse_bom_file(bom_image)
+        assert rows and all(r.get("source") == "ocr" for r in rows)

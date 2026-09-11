@@ -1,5 +1,6 @@
 """
-BOM file parser -- PDF, XLSX, CSV, TSV and plain text into structured line items.
+BOM file parser -- PDF, XLSX, CSV, TSV, plain text, and scanned/photographed
+documents (via OCR) into structured line items.
 
 ORIGIN
 ------
@@ -25,11 +26,19 @@ detection instead, and only free text, PDF and OCR fall back to the pattern.
 Replaced with a token scan plus a shape test (see `find_mpn`), which handles both
 styles. Everything else is theirs.
 
+A second change: a scanned PDF (no text layer) or an image file used to be a
+hard refusal here -- "reading it needs OCR, which is not wired up". It now
+falls to `ocr.py` (RapidOCR, open source, no API key, no network call at
+inference time) instead of raising. See that module's docstring for why an
+OCR reading is safe to let into the same pipeline as everything else, and
+resolve.py's for how it stays visibly flagged once it is in.
+
 KNOWN LIMIT
 -----------
 Free-text extraction stays heuristic, and always will be: a purely numeric part
 like Molex `43045-0400` is genuinely ambiguous with a date or a quantity when it
-has no column heading above it. Tabular files are reliable; PDFs are best effort.
+has no column heading above it. Tabular files are reliable; PDFs are best effort;
+OCR is best effort on top of best effort -- see ocr.py for the accuracy trade.
 """
 
 from __future__ import annotations
@@ -289,18 +298,16 @@ def parse_pdf(filepath) -> List[dict]:
     reader = PdfReader(str(filepath))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
 
-    # A scanned BOM used to come back as zero rows and no error, which reads as
-    # "the system is broken" rather than "this file has no text in it". Those
-    # are different problems and the user can only act on one of them.
+    # A page of a born-digital PDF carries hundreds of characters of real
+    # text; a scanned or photographed page carries none, because the table is
+    # pixels, not text objects. That used to be a dead end -- see ocr.py,
+    # which reads pixels instead and is what a page this thin now falls to.
     pages = max(1, len(reader.pages))
     if len(text.strip()) < _TEXT_PER_PAGE_FLOOR * pages:
-        raise RuntimeError(
-            f"This PDF has no text layer -- {len(text.strip())} characters across "
-            f"{pages} page(s) -- so it is a scan or a photograph rather than an "
-            f"exported document. Reading it needs OCR, which is not wired up. "
-            f"Ask for the BOM as CSV or XLSX, or as a PDF exported from the CAD "
-            f"tool rather than printed and scanned."
-        )
+        from .ocr import ocr_pdf_file  # lazy: only a scan pulls in RapidOCR
+
+        return ocr_pdf_file(filepath)
+
     # Try the cells first, then the text, and keep whichever found more parts.
     # Neither wins everywhere: table extraction handles a typeset manual that
     # defeats the text path, and the text path handles an exported sheet whose
@@ -579,12 +586,9 @@ def parse_bom_file(filepath) -> List[dict]:
     ext = filepath.suffix.lower()
 
     if ext in IMAGE_EXTS:
-        raise RuntimeError(
-            "This is an image. Reading one means a model transcribing the "
-            "figures, with nothing to check them against, so it is deliberately "
-            "not supported. Supply the BOM as CSV, XLSX, or a PDF exported from "
-            "the CAD tool."
-        )
+        from .ocr import ocr_image_file  # lazy: only an image pulls in RapidOCR
+
+        return ocr_image_file(filepath)
     if ext == ".pdf":
         return parse_pdf(filepath)
     if ext in (".xlsx", ".xls"):
