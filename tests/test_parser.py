@@ -118,6 +118,99 @@ class TestControlledDocument:
         assert by_ref["C43"] == 0
 
 
+class TestNucleoShieldDocument:
+    """
+    A demo document mixing several pages of board-overview prose with a real
+    BOM table (scripts/make_nucleo_shield_bom.py) -- the realistic case
+    TestTableBeatsProse is a minimal, synthetic pin of.
+    """
+
+    @pytest.fixture(scope="class")
+    def rows(self, samples):
+        path = samples / "BOM-KE-G474-SHIELD-A.pdf"
+        if not path.exists():
+            pytest.skip("fixture not generated")
+        return parse_bom_file(path)
+
+    def test_all_twenty_one_lines_come_back(self, rows):
+        assert len(rows) == 21
+
+    def test_front_matter_is_not_mistaken_for_a_part(self, rows):
+        mpns = {r["mpn"] for r in rows}
+        assert "STM32G474RET6" not in mpns
+        assert "NUCLEO-G474RE" not in mpns
+
+    def test_known_lines_carry_their_real_quantity(self, rows):
+        by_ref = {r["reference_designator"]: r["quantity"] for r in rows}
+        assert by_ref["Q1-Q6"] == 6
+        assert by_ref["C1-C16"] == 16
+
+    def test_the_dnp_line_is_zero(self, rows):
+        by_ref = {r["reference_designator"]: r["quantity"] for r in rows}
+        assert by_ref["U9"] == 0
+
+
+class TestTableBeatsProse:
+    """
+    A document that is a real table plus several pages of front matter --
+    a datasheet with the BOM as one page among many, not a bare BOM file.
+
+    parse_pdf used to keep whichever of its two extraction paths found more
+    rows. That reads as reasonable until the document has enough prose for
+    it to stop being true: a phrase like "STM32G474RET6" is shaped exactly
+    like a part number to find_mpn, and a few pages of it outnumbers a small
+    table's genuinely correct rows on count alone -- discarding the accurate
+    extraction for the noisy one. Found building a demo fixture for exactly
+    this shape of document; see parse_pdf's docstring for the fix.
+    """
+
+    @pytest.fixture(scope="class")
+    def rows(self, tmp_path_factory):
+        pytest.importorskip("fpdf")
+        from fpdf import FPDF
+        from fpdf.enums import XPos, YPos
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # Several pages of prose, deliberately stuffed with MPN-shaped
+        # tokens a shape test alone cannot tell from a real part number.
+        pdf.add_page()
+        pdf.set_font("Helvetica", "", 11)
+        prose = (
+            "NUCLEO-G474RE STM32G474RET6 MIPI-10 STM32CubeIDE Nucleo-64 "
+        )
+        for _ in range(3):
+            pdf.add_page()
+            pdf.multi_cell(0, 6, prose * 40, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        # One real, small table.
+        pdf.add_page()
+        pdf.set_font("Courier", "B", 9)
+        for name, w in [("Ref Des", 30), ("MPN", 50), ("Qty", 15)]:
+            pdf.cell(w, 6, name, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP)
+        pdf.ln(6)
+        pdf.set_font("Courier", "", 9)
+        for ref, mpn, qty in [("U1", "STM32F407VGT6", "1"),
+                              ("U2", "TCAN332DR", "1")]:
+            for text, w in [(ref, 30), (mpn, 50), (qty, 15)]:
+                pdf.cell(w, 6, text, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP)
+            pdf.ln(6)
+
+        path = tmp_path_factory.mktemp("prose") / "datasheet_with_bom.pdf"
+        pdf.output(str(path))
+        return parse_bom_file(path)
+
+    def test_the_table_is_what_comes_back(self, rows):
+        mpns = {r["mpn"] for r in rows}
+        assert mpns == {"STM32F407VGT6", "TCAN332DR"}
+
+    def test_prose_is_not_mistaken_for_parts(self, rows):
+        mpns = {r["mpn"] for r in rows}
+        assert "STM32G474RET6" not in mpns
+        assert "NUCLEO-G474RE" not in mpns
+
+
 class TestRefusals:
     def test_an_unreadable_image_raises_a_clear_error(self, tmp_path):
         """

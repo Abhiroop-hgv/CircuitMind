@@ -308,13 +308,23 @@ def parse_pdf(filepath) -> List[dict]:
 
         return ocr_pdf_file(filepath)
 
-    # Try the cells first, then the text, and keep whichever found more parts.
-    # Neither wins everywhere: table extraction handles a typeset manual that
-    # defeats the text path, and the text path handles an exported sheet whose
-    # columns are drawn with spacing rather than ruling lines.
+    # Try the cells first, and prefer them whenever they found anything.
+    # parse_pdf_tables only emits a row from a table pdfplumber actually
+    # detected, with a header it recognised as naming an "mpn" column -- a
+    # structural guarantee the free-text path has none of. That used to be
+    # "whichever path found more rows", which reads as reasonable until a
+    # real document is a datasheet with the BOM as one table among several
+    # pages of prose: page text like "STM32G474RET6" or "NUCLEO-G474RE" is
+    # shaped exactly like a part number to find_mpn, and a document with
+    # enough of that prose outweighs the table's genuinely correct rows on
+    # count alone, discarding the accurate extraction for the noisy one. The
+    # text path stays the fallback for what parse_pdf_tables cannot see at
+    # all: a typeset manual with no ruling lines, or an exported sheet whose
+    # columns are drawn with spacing rather than a real table structure.
     from_tables = parse_pdf_tables(filepath)
-    from_text = _parse_text(text)
-    return from_tables if len(from_tables) > len(from_text) else from_text
+    if from_tables:
+        return from_tables
+    return _parse_text(text)
 
 
 def parse_xlsx(filepath) -> List[dict]:
