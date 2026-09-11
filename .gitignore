@@ -35,3 +35,7 @@ web/.git-scaffold-backup/
 # option: embeds STMicroelectronics' own product photo, so it never belongs
 # in this (public) repo's history. See that script's main() docstring.
 samples/*-with-photo.pdf
+
+# Holds the live Render database's real external connection string (a
+# credential) inline. Never commit this -- see the file itself.
+scripts/reset_demo.ps1
