@@ -57,16 +57,7 @@ const PITCH = [
 ];
 
 function Logo() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden fill="none">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="url(#lg)" />
-      <path d="M15 8a4.5 4.5 0 1 0 0 8" stroke="#051222" strokeWidth="2.4" strokeLinecap="round" />
-      <circle cx="15.5" cy="12" r="1.8" fill="#051222" />
-      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#6db4ff" /><stop offset="1" stopColor="#4a9eff" />
-      </linearGradient></defs>
-    </svg>
-  );
+  return <img src="/circuitmind-icon.png" alt="" className="cm-mark-icon" />;
 }
 function Check() {
   return (

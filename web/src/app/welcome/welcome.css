@@ -42,8 +42,8 @@
   border-bottom-color: var(--l-line);
   padding-top: 16px; padding-bottom: 16px;
 }
-.cm-brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
-.cm-brand svg { width: 22px; height: 22px; }
+.cm-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
+.cm-mark-icon { width: 26px; height: auto; display: block; }
 .cm-nav-links { display: flex; gap: 34px; font-size: 14px; font-weight: 500; }
 .cm-nav-links button { background: none; border: 0; font: inherit; color: var(--l-text-2); cursor: pointer; }
 .cm-nav-links button:hover { color: var(--l-text); }
@@ -229,8 +229,8 @@
   background: linear-gradient(160deg, color-mix(in srgb, var(--l-blue) 10%, transparent), transparent 55%), var(--l-bg-2);
   border-right: 1px solid var(--l-line);
 }
-.cm-signin-pitch .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
-.cm-signin-pitch .brand svg { width: 24px; height: 24px; }
+.cm-signin-pitch .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: .04em; }
+.cm-signin-pitch .brand .cm-mark-icon { width: 28px; }
 .cm-signin-pitch h2 { margin: 6px 0 0; font-size: clamp(32px, 3.6vw, 46px); line-height: 1.1; letter-spacing: -.02em; font-weight: 600; }
 .cm-signin-pitch .lede { margin: 0; color: var(--l-text-2); font-size: 16px; line-height: 1.6; max-width: 42ch; }
 .cm-signin-pitch ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
